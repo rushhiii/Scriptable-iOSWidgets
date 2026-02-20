@@ -149,6 +149,24 @@ The **order doesn't matter**. Examples:
 |:--:|:--:|
 
 
+## Simple Notion API Version
+
+If you prefer to keep your quotes in Notion and want a simpler setup, you can use a version of this widget that fetches quotes directly from your Notion database using the Notion API.
+
+- No Google Sheet required
+- Direct Notion integration
+- Easy setup for Notion users
+
+See the [Notion API Quickstart Guide](../Countdown%20Widget/v2/NOTION_API_GUIDE.md) for instructions on setting up your Notion integration token and database ID.
+
+_This is ideal if you want to manage quotes in Notion and display them in a Scriptable widget with minimal configuration._
+
+## 📦 NotionQuotes Script
+
+For a simple Notion-based version, see [`NotionQuotes.js`](./NotionQuotes.js) and its [usage guide](./NotionQuotes-USAGE.md). This script fetches quotes directly from your Notion database using the Notion API—no Google Sheet required.
+
+_See the Notion API Quickstart Guide for setup instructions._
+
 ## 🙌 Feedback
 
 Have feature ideas or issues? DM me on [Instagram](https://www.instagram.com/the.tirth12) or email me at <rushiofficial1205@gmail.com>.

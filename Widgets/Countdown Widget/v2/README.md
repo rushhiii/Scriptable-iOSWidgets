@@ -17,6 +17,19 @@
 A Scriptable widget powered by a Notion → Google Sheets → Google Calendar pipeline, with a lightweight JSON feed for the widget UI.
 
 
+
+## Table of content
+
+- [What you get](#what-you-get)
+- [Who this is](#who-this-is)
+- [Quick start](#quick-start)
+- [Widget size behavior](#widget-size-behavior)
+- [Data flow (overview)](#data-flow-overview)
+- [Notion template & dashboard](#notion-template--dashboard)
+- [Troubleshooting](#troubleshooting)
+- [Want a Simpler Notion-Only Version?](#want-a-simpler-notion-only-version)
+
+
 ## What you get
 
 - **Small widget**: next upcoming event with date + countdown
@@ -138,3 +151,17 @@ _Template Link—_ [Birthday & Event Tracker Dashboard [Template]](https://lavis
 - **Dates look wrong**: ensure the feed returns dates in `YYYY-MM-DD` and your Scriptable script parses them.
 - **Colors missing**: check `Widget Clr` column values (hex like #2980b9).
 
+## Want a Simpler Notion-Only Version?
+
+If you **don’t want Google Calendar reminders or notification integration**, you can use a much simpler version of the script that connects **directly to the Notion API**. This version fetches your events straight from Notion, with no Google Sheets or Apps Script required.
+
+- **No Google Calendar or Sheets needed**
+- **Direct Notion API integration**
+- **Faster setup for Notion users**
+
+See the [Notion API Quickstart Guide](./NOTION_API_GUIDE.md) for:
+- How to set up a free Notion developer integration/token
+- How to get your Notion database ID (data source ID)
+- How to use the Notion-only Scriptable script
+
+_This is perfect if you only want to manage events in Notion and don’t need advanced notification/reminder features._
