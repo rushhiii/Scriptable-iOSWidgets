@@ -142,7 +142,7 @@ Notion → Google Sheets → Apps Script → Google Calendar → Scriptable Widg
 
 ![Notion dashboard](https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/countdown/notion-dashboard.png)
 
-_Template Link—_ [Birthday & Event Tracker Dashboard [Template]](https://lavish-nasturtium-67d.notion.site/Birthday-Event-Tracker-Template-2fc92758f55a8050a0f4c0207b5eeda5?source=copy_link)
+_Template Link—_ [Birthday & Event Tracker Dashboard [Template]](https://rushhiii.notion.site/Birthday-Event-Tracker-Dashboard-Template-2fc92758f55a8050a0f4c0207b5eeda5?source=copy_link)
 
 
 ## Troubleshooting
