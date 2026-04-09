@@ -1,0 +1,50 @@
+---
+title: Overview
+description: A modern, customizable home for the Scriptable widget collection.
+section: Start Here
+---
+
+<Hero
+  title="Scriptable iOS Widgets"
+  subtitle="Documentation"
+  description="A curated collection of Scriptable widgets, rebuilt with a clean, GitBook-inspired experience. Find a widget, set it up once, and keep it looking sharp on every refresh."
+  primaryLabel="Browse widgets"
+  primaryHref="/widgets"
+  secondaryLabel="Installation"
+  secondaryHref="/installation"
+/>
+
+## What this collection is
+
+This repository contains hand-crafted Scriptable widgets for iOS. Each widget is a standalone script that you drop into the Scriptable app, configure once, and add to your home screen.
+
+- Consistent setup across every widget.
+- Clear parameters for fast customization.
+- Offline-friendly behavior where possible.
+
+## Quick start
+
+1. Install Scriptable on your iPhone or iPad.
+2. Pick a widget from the list below.
+3. Copy the JavaScript file into Scriptable.
+4. Add a Scriptable widget and select the script.
+5. Adjust parameters to match your layout.
+
+## Featured widgets
+
+<CardGrid>
+  <Card title="Dynamic Weather" href="/widgets/weather-widget" meta="OpenWeather, auto location" />
+  <Card title="AQI + Temperature" href="/widgets/aqi-widget" meta="Air quality with smart theming" />
+  <Card title="Countdown" href="/widgets/countdown-widget" meta="Events, sheets, offline cache" />
+  <Card title="GitHub Stats" href="/widgets/github-stats-widget" meta="Themes, heatmap, offline" />
+</CardGrid>
+
+## Design notes
+
+<Callout title="Keep it lean" variant="note">
+  These widgets are optimized for fast refreshes. If you add new APIs, keep the payload small and cache results whenever possible.
+</Callout>
+
+## Need help
+
+If a widget fails to load, run the script directly in Scriptable first. Most issues come from missing API keys, incorrect sheet URLs, or location permissions.

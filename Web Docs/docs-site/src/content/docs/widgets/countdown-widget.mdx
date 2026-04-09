@@ -1,0 +1,31 @@
+---
+title: Countdown Widget
+description: Track events with Google Sheets, offline cache, and flexible layouts.
+section: Widgets
+---
+
+![Countdown widget preview](https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/countdown/countdow_showcase.png)
+
+## Overview
+
+A multi-size countdown widget that reads events from a Google Sheet Web App. It supports list or grid layouts, age display, and offline caching.
+
+## Setup
+
+1. Create a Google Sheet with columns: name, date, icon, color.
+2. Publish the sheet via Apps Script as a Web App that returns JSON.
+3. Paste the Web App URL into SHEET_API_URL.
+4. Save the script and add a Scriptable widget.
+
+## Parameters
+
+- age: show years since the event date.
+- col: grid view for medium and large widgets.
+- pg2, pg3: paginated views for list or grid layouts.
+- name or index: show a specific event in small widgets.
+
+## Notes
+
+<Callout title="Offline cache" variant="note">
+  The widget caches the last successful response in Scriptable. If the sheet is unreachable, it will fall back to cached data.
+</Callout>
