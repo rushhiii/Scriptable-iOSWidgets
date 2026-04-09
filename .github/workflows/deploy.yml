@@ -1,10 +1,6 @@
 name: Deploy VitePress Documentation
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: []
 
 # Add permissions for GITHUB_TOKEN
 permissions:
