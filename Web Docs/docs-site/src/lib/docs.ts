@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import matter from "gray-matter";
 import GithubSlugger from "github-slugger";
 
@@ -18,7 +19,8 @@ export type Doc = {
   headings: Heading[];
 };
 
-const docsRoot = path.join(process.cwd(), "src", "content", "docs");
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const docsRoot = path.join(currentDir, "..", "content", "docs");
 
 function walkDir(dir: string, files: string[] = []) {
   if (!fs.existsSync(dir)) {
