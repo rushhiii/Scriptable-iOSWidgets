@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 type SearchHeading = {
   depth: number;
@@ -15,6 +16,13 @@ type SearchItem = {
   href: string;
   section: string;
 };
+
+function normalizeHref(href: string) {
+  if (href === "/" || href.startsWith("http") || href.includes("#")) {
+    return href;
+  }
+  return href.endsWith("/") ? href : `${href}/`;
+}
 
 function scoreItem(item: SearchItem, query: string) {
   const lower = query.toLowerCase();
@@ -79,79 +87,49 @@ export function SearchCommand() {
 
   return (
     <>
-      <button className="action-button" type="button" onClick={() => setOpen(true)}>
-        Search
-        <span style={{ color: "var(--text-3)", fontSize: "0.8rem" }}>Ctrl K</span>
+      <button className="search-trigger" type="button" onClick={() => setOpen(true)}>
+        <Search className="search-icon" aria-hidden="true" size={16} />
+        <span className="search-text">Search...</span>
+        <span className="search-kbd">Ctrl K</span>
       </button>
       {open ? (
         <div
           role="dialog"
           aria-modal="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.35)",
-            display: "grid",
-            placeItems: "center",
-            zIndex: 100,
-          }}
+          className="search-overlay"
           onClick={() => setOpen(false)}
         >
           <div
-            style={{
-              width: "min(720px, 92vw)",
-              background: "var(--surface)",
-              borderRadius: "24px",
-              border: "1px solid var(--border)",
-              padding: "1.5rem",
-              boxShadow: "var(--shadow)",
-            }}
+            className="search-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem" }}>
+            <div className="search-input-row">
               <input
                 ref={inputRef}
                 placeholder="Search docs, widgets, and setup guides"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                style={{
-                  flex: 1,
-                  padding: "0.85rem 1rem",
-                  borderRadius: "14px",
-                  border: "1px solid var(--border)",
-                  background: "var(--bg-soft)",
-                  color: "var(--text-1)",
-                  fontSize: "1rem",
-                }}
+                className="search-input"
               />
               <button className="action-button" type="button" onClick={() => setOpen(false)}>
                 Close
               </button>
             </div>
-            <div style={{ display: "grid", gap: "0.75rem" }}>
+            <div className="search-results">
               {results.length ? (
                 results.map((item) => (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={normalizeHref(item.href)}
                     onClick={() => setOpen(false)}
-                    style={{
-                      display: "grid",
-                      gap: "0.2rem",
-                      padding: "0.85rem 1rem",
-                      borderRadius: "16px",
-                      border: "1px solid var(--border)",
-                      background: "var(--surface)",
-                    }}
+                    className="search-result"
                   >
-                    <div style={{ fontWeight: 600 }}>{item.title}</div>
-                    <div style={{ color: "var(--text-3)", fontSize: "0.9rem" }}>
-                      {item.summary || item.section}
-                    </div>
+                    <div className="search-result-title">{item.title}</div>
+                    <div className="search-result-meta">{item.summary || item.section}</div>
                   </Link>
                 ))
               ) : (
-                <div style={{ color: "var(--text-3)", fontSize: "0.95rem" }}>
+                <div className="search-empty">
                   No results yet. Try another search.
                 </div>
               )}

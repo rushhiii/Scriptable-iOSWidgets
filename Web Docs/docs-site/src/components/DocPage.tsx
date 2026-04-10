@@ -7,17 +7,22 @@ import { DocsToc } from "./DocsToc";
 import { mdxComponents } from "./mdx/mdx-components";
 
 export function DocPage({ doc }: { doc: Doc }) {
+  const isLanding = doc.layout === "landing";
+  const showToc = doc.toc && doc.headings.length > 0;
+
   return (
     <>
-      <section className="content-panel">
-        <header className="doc-header">
-          <div className="doc-kicker">{doc.section}</div>
-          <h1 className="doc-title">{doc.title}</h1>
-          {doc.description ? (
-            <p className="doc-summary">{doc.description}</p>
-          ) : null}
-        </header>
-        <div className="doc-content">
+      <section className={isLanding ? "landing-panel" : "content-panel"}>
+        {!isLanding ? (
+          <header className="doc-header">
+            <div className="doc-kicker">{doc.section}</div>
+            <h1 className="doc-title">{doc.title}</h1>
+            {doc.description ? (
+              <p className="doc-summary">{doc.description}</p>
+            ) : null}
+          </header>
+        ) : null}
+        <div className={isLanding ? "landing-content" : "doc-content"}>
           <MDXRemote
             source={doc.content}
             components={mdxComponents}
@@ -30,7 +35,7 @@ export function DocPage({ doc }: { doc: Doc }) {
           />
         </div>
       </section>
-      <DocsToc headings={doc.headings} />
+      {showToc ? <DocsToc headings={doc.headings} /> : null}
     </>
   );
 }

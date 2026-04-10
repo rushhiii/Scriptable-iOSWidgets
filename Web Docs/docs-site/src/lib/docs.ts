@@ -17,6 +17,8 @@ export type Doc = {
   section: string;
   content: string;
   headings: Heading[];
+  layout: "default" | "landing";
+  toc: boolean;
 };
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
@@ -122,6 +124,8 @@ export function getDocBySlug(slugSegments: string[]) {
   const title = data.title ? String(data.title) : "Documentation";
   const description = data.description ? String(data.description) : "";
   const section = data.section ? String(data.section) : "Documentation";
+  const layout = data.layout === "landing" ? "landing" : "default";
+  const toc = data.toc === false ? false : true;
 
   return {
     slug,
@@ -130,5 +134,7 @@ export function getDocBySlug(slugSegments: string[]) {
     section,
     content,
     headings: extractHeadings(content),
+    layout,
+    toc,
   } satisfies Doc;
 }

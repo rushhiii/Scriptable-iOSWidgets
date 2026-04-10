@@ -1,6 +1,7 @@
 export type NavItem = {
   title: string;
   href: string;
+  icon?: string;
 };
 
 export type NavSection = {
@@ -8,11 +9,25 @@ export type NavSection = {
   items: NavItem[];
 };
 
+export const topNav: NavItem[] = [
+  { title: "Home", href: "/", icon: "home" },
+  { title: "Product Docs", href: "/widgets", icon: "book" },
+  { title: "Changelog", href: "/changelog", icon: "list" },
+];
+
+export const docSubNav: NavItem[] = [
+  { title: "Overview", href: "/", icon: "home" },
+  { title: "Installation", href: "/installation", icon: "download" },
+  { title: "Usage", href: "/usage", icon: "sliders" },
+  { title: "Widgets", href: "/widgets", icon: "grid" },
+  { title: "Changelog", href: "/changelog", icon: "list" },
+];
+
 export const docsNav: NavSection[] = [
   {
-    title: "Start Here",
+    title: "Getting Started",
     items: [
-      { title: "Overview", href: "/" },
+      { title: "Home", href: "/" },
       { title: "Installation", href: "/installation" },
       { title: "Usage", href: "/usage" },
     ],
@@ -37,6 +52,7 @@ export const docsNav: NavSection[] = [
   {
     title: "Reference",
     items: [
+      { title: "Changelog", href: "/changelog" },
       { title: "Contributing", href: "/contributing" },
     ],
   },

@@ -1,50 +1,96 @@
 ---
-title: Overview
-description: A modern, customizable home for the Scriptable widget collection.
-section: Start Here
+title: Home
+description: A GitBook-inspired landing page for Scriptable widget documentation.
+section: Home
+layout: landing
+toc: false
 ---
 
 <Hero
   title="Scriptable iOS Widgets"
   subtitle="Documentation"
-  description="A curated collection of Scriptable widgets, rebuilt with a clean, GitBook-inspired experience. Find a widget, set it up once, and keep it looking sharp on every refresh."
-  primaryLabel="Browse widgets"
+  description="A curated collection of Scriptable widgets, presented in a modern, GitBook-style layout. Pick a widget, follow a clean setup flow, and keep your home screen dialed in."
+  primaryLabel="Explore widgets"
   primaryHref="/widgets"
   secondaryLabel="Installation"
   secondaryHref="/installation"
 />
 
-## What this collection is
+<section className="landing-section">
+  <div className="section-header">
+    <p className="section-eyebrow">Get started</p>
+    <h2>Jump right in</h2>
+    <p>Everything you need to install Scriptable, configure widgets, and personalize your layout.</p>
+  </div>
+  <CardGrid>
+    <Card title="Quickstart" href="/installation" meta="Install Scriptable + first widget">
+      <p>Start in minutes with a clean setup flow and checklists.</p>
+    </Card>
+    <Card title="Widget Library" href="/widgets" meta="All widgets, sizes, and sources">
+      <p>Browse every widget with parameters, data sources, and tips.</p>
+    </Card>
+    <Card title="Usage Patterns" href="/usage" meta="Parameters, updates, troubleshooting">
+      <p>Learn the standard config style used across all widgets.</p>
+    </Card>
+  </CardGrid>
+</section>
 
-This repository contains hand-crafted Scriptable widgets for iOS. Each widget is a standalone script that you drop into the Scriptable app, configure once, and add to your home screen.
+<section className="landing-section">
+  <div className="section-header">
+    <p className="section-eyebrow">Designed for growth</p>
+    <h2>Documentation that scales with the collection</h2>
+    <p>Reusable sections, consistent setup flows, and modular widgets make it easy to expand the docs as new scripts ship.</p>
+  </div>
+  <div className="feature-grid">
+    <div className="feature-card">
+      <h3>Consistent setup blocks</h3>
+      <p>Every widget page follows the same structure so users can scan, install, and tweak fast.</p>
+    </div>
+    <div className="feature-card">
+      <h3>Data source clarity</h3>
+      <p>Each widget calls out APIs, sheets, or tokens so future updates stay documented.</p>
+    </div>
+    <div className="feature-card">
+      <h3>Built for multiple sizes</h3>
+      <p>Docs describe size behavior, layouts, and parameters across small, medium, and large widgets.</p>
+    </div>
+    <div className="feature-card">
+      <h3>Reusable components</h3>
+      <p>Cards, callouts, and section blocks keep the UI consistent as the library grows.</p>
+    </div>
+  </div>
+</section>
 
-- Consistent setup across every widget.
-- Clear parameters for fast customization.
-- Offline-friendly behavior where possible.
+<section className="landing-section">
+  <div className="section-header">
+    <p className="section-eyebrow">Featured widgets</p>
+    <h2>Start with the essentials</h2>
+    <p>These are the most popular widgets to get your home screen feeling alive.</p>
+  </div>
+  <CardGrid>
+    <Card title="Dynamic Weather" href="/widgets/weather-widget" meta="OpenWeather, auto location" />
+    <Card title="AQI + Temperature" href="/widgets/aqi-widget" meta="Air quality with smart themes" />
+    <Card title="Countdown" href="/widgets/countdown-widget" meta="Events, sheets, offline cache" />
+    <Card title="GitHub Stats" href="/widgets/github-stats-widget" meta="Themes, heatmap, offline" />
+  </CardGrid>
+</section>
 
-## Quick start
+<section className="landing-section">
+  <div className="section-header">
+    <p className="section-eyebrow">Latest updates</p>
+    <h2>Keep your setup current</h2>
+    <p>Follow updates as new widgets drop or existing ones get refreshed.</p>
+  </div>
+  <CardGrid>
+    <Card title="Changelog" href="/changelog" meta="Recent releases and revisions">
+      <p>Track what changed and when to refresh your scripts.</p>
+    </Card>
+    <Card title="Contributing" href="/contributing" meta="Add new widgets or improve docs">
+      <p>Ship improvements with consistent structure and visuals.</p>
+    </Card>
+  </CardGrid>
+</section>
 
-1. Install Scriptable on your iPhone or iPad.
-2. Pick a widget from the list below.
-3. Copy the JavaScript file into Scriptable.
-4. Add a Scriptable widget and select the script.
-5. Adjust parameters to match your layout.
-
-## Featured widgets
-
-<CardGrid>
-  <Card title="Dynamic Weather" href="/widgets/weather-widget" meta="OpenWeather, auto location" />
-  <Card title="AQI + Temperature" href="/widgets/aqi-widget" meta="Air quality with smart theming" />
-  <Card title="Countdown" href="/widgets/countdown-widget" meta="Events, sheets, offline cache" />
-  <Card title="GitHub Stats" href="/widgets/github-stats-widget" meta="Themes, heatmap, offline" />
-</CardGrid>
-
-## Design notes
-
-<Callout title="Keep it lean" variant="note">
-  These widgets are optimized for fast refreshes. If you add new APIs, keep the payload small and cache results whenever possible.
+<Callout title="Need help?" variant="note">
+  If a widget fails to load, run the script directly in Scriptable first. Most issues come from missing API keys, incorrect sheet URLs, or location permissions.
 </Callout>
-
-## Need help
-
-If a widget fails to load, run the script directly in Scriptable first. Most issues come from missing API keys, incorrect sheet URLs, or location permissions.

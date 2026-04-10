@@ -1,5 +1,21 @@
 [
   {
+    "title": "Changelog",
+    "summary": "Track widget updates and documentation changes.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "April 2026"
+      },
+      {
+        "depth": 2,
+        "title": "Coming next"
+      }
+    ],
+    "href": "/changelog",
+    "section": "Reference"
+  },
+  {
     "title": "Contributing",
     "summary": "How to propose changes or add a new widget.",
     "headings": [
@@ -20,32 +36,11 @@
     "section": "Reference"
   },
   {
-    "title": "Overview",
-    "summary": "A modern, customizable home for the Scriptable widget collection.",
-    "headings": [
-      {
-        "depth": 2,
-        "title": "What this collection is"
-      },
-      {
-        "depth": 2,
-        "title": "Quick start"
-      },
-      {
-        "depth": 2,
-        "title": "Featured widgets"
-      },
-      {
-        "depth": 2,
-        "title": "Design notes"
-      },
-      {
-        "depth": 2,
-        "title": "Need help"
-      }
-    ],
+    "title": "Home",
+    "summary": "A GitBook-inspired landing page for Scriptable widget documentation.",
+    "headings": [],
     "href": "/",
-    "section": "Start Here"
+    "section": "Home"
   },
   {
     "title": "Installation",

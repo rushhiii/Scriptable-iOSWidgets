@@ -99,7 +99,7 @@ function buildIndex() {
     const summary = data.description ? String(data.description) : extractSummary(content);
     const headings = extractHeadings(content);
 
-    const href = slug ? `/${slug}` : "/";
+    const href = slug ? `/${slug}/` : "/";
 
     return {
       title,

@@ -1,18 +1,6 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Source_Sans_3, Space_Grotesk } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-
-const headingFont = Space_Grotesk({
-  variable: "--font-heading",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const bodyFont = Source_Sans_3({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
 
 const monoFont = JetBrains_Mono({
   variable: "--font-mono",
@@ -46,8 +34,7 @@ export const metadata: Metadata = {
 function ThemeScript() {
   const script = `(function(){
     var stored = localStorage.getItem('docs-theme');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme = stored || (prefersDark ? 'dark' : 'light');
+    var theme = stored || 'dark';
     document.documentElement.dataset.theme = theme;
   })();`;
 
@@ -62,10 +49,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
+      className={`${monoFont.variable} theme-gradient tint`}
       suppressHydrationWarning
     >
-      <body>
+      <body className="site-background">
         <ThemeScript />
         {children}
       </body>
