@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, Home, List } from "lucide-react";
 import { topNav } from "@/lib/docs-nav";
-import { SearchCommand } from "./SearchCommand";
-import { ThemeToggle } from "./ThemeToggle";
+import { SearchCommand } from "@/components/SearchCommand";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function isActivePath(pathname: string, href: string) {
   if (href === "/") {
