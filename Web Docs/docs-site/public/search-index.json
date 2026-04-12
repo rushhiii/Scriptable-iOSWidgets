@@ -12,7 +12,7 @@
         "title": "Coming next"
       }
     ],
-    "href": "/changelog",
+    "href": "/changelog/",
     "section": "Reference"
   },
   {
@@ -32,7 +32,7 @@
         "title": "Report issues"
       }
     ],
-    "href": "/contributing",
+    "href": "/contributing/",
     "section": "Reference"
   },
   {
@@ -67,7 +67,7 @@
         "title": "Verify the setup"
       }
     ],
-    "href": "/installation",
+    "href": "/installation/",
     "section": "Start Here"
   },
   {
@@ -95,7 +95,7 @@
         "title": "Troubleshooting"
       }
     ],
-    "href": "/usage",
+    "href": "/usage/",
     "section": "Start Here"
   },
   {
@@ -123,7 +123,7 @@
         "title": "Data sources"
       }
     ],
-    "href": "/widgets/aqi-widget",
+    "href": "/widgets/aqi-widget/",
     "section": "Widgets"
   },
   {
@@ -143,7 +143,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/birthday-widget",
+    "href": "/widgets/birthday-widget/",
     "section": "Widgets"
   },
   {
@@ -167,7 +167,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/countdown-widget-v2",
+    "href": "/widgets/countdown-widget-v2/",
     "section": "Widgets"
   },
   {
@@ -191,7 +191,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/countdown-widget",
+    "href": "/widgets/countdown-widget/",
     "section": "Widgets"
   },
   {
@@ -215,7 +215,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/github-stats-widget",
+    "href": "/widgets/github-stats-widget/",
     "section": "Widgets"
   },
   {
@@ -235,7 +235,7 @@
         "title": "Sizes"
       }
     ],
-    "href": "/widgets/hindu-color-wear-widget",
+    "href": "/widgets/hindu-color-wear-widget/",
     "section": "Widgets"
   },
   {
@@ -247,7 +247,7 @@
         "title": "At a glance"
       }
     ],
-    "href": "/widgets",
+    "href": "/widgets/",
     "section": "Widgets"
   },
   {
@@ -271,7 +271,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/quote-widget",
+    "href": "/widgets/quote-widget/",
     "section": "Widgets"
   },
   {
@@ -295,7 +295,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/schedule-widget",
+    "href": "/widgets/schedule-widget/",
     "section": "Widgets"
   },
   {
@@ -319,7 +319,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/time-progress-widget",
+    "href": "/widgets/time-progress-widget/",
     "section": "Widgets"
   },
   {
@@ -331,7 +331,7 @@
         "title": "Status"
       }
     ],
-    "href": "/widgets/toyota-widget",
+    "href": "/widgets/toyota-widget/",
     "section": "Widgets"
   },
   {
@@ -355,7 +355,7 @@
         "title": "Notes"
       }
     ],
-    "href": "/widgets/weather-widget",
+    "href": "/widgets/weather-widget/",
     "section": "Widgets"
   }
 ]
