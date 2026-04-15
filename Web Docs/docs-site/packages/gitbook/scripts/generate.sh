@@ -9,4 +9,8 @@ gitbook-math ./public/~gitbook/static/math
 cp -r ../embed/standalone/ ./public/~gitbook/static/embed
 
 # Generate the types
-wrangler types
+if [[ -n "${VERCEL:-}" ]]; then
+	echo "Skipping wrangler types on Vercel build"
+else
+	wrangler types
+fi
