@@ -42,6 +42,7 @@ type Frontmatter = {
 };
 
 const DOCS_ROOT = path.join(process.cwd(), 'content', 'docs');
+const MARKDOWN_FILE_PATTERN = /\.(md|mdx)$/i;
 
 async function readMarkdownFiles(dirPath: string): Promise<string[]> {
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
@@ -54,7 +55,7 @@ async function readMarkdownFiles(dirPath: string): Promise<string[]> {
         return readMarkdownFiles(absolutePath);
       }
 
-      if (entry.isFile() && absolutePath.endsWith('.md')) {
+      if (entry.isFile() && MARKDOWN_FILE_PATTERN.test(absolutePath)) {
         return [absolutePath];
       }
 
@@ -66,7 +67,7 @@ async function readMarkdownFiles(dirPath: string): Promise<string[]> {
 }
 
 function normalizeSlug(relativePath: string): string[] {
-  const unixStyle = relativePath.replace(/\\/g, '/').replace(/\.md$/, '');
+  const unixStyle = relativePath.replace(/\\/g, '/').replace(MARKDOWN_FILE_PATTERN, '');
   const parts = unixStyle.split('/').filter(Boolean);
 
   if (parts.at(-1) === 'index') {
@@ -91,6 +92,120 @@ function stripMarkdownTokens(value: string): string {
     .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
     .replace(/[*_~]/g, '')
     .trim();
+}
+
+function parseTagAttributes(tagBody: string): Record<string, string> {
+  const attributes: Record<string, string> = {};
+
+  for (const match of tagBody.matchAll(/([A-Za-z][A-Za-z0-9_-]*)=(?:"([^"]*)"|'([^']*)')/g)) {
+    const key = match[1];
+    const value = match[2] ?? match[3] ?? '';
+    attributes[key] = value;
+  }
+
+  return attributes;
+}
+
+function compactWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function stripLegacyLayoutTags(value: string): string {
+  return value
+    .replace(/<\/?section\b[^>]*>/g, '')
+    .replace(/<\/?div\b[^>]*>/g, '')
+    .replace(/<p\b[^>]*>/g, '')
+    .replace(/<\/p>/g, '\n');
+}
+
+function renderLegacyHero(attributesRaw: string): string {
+  const attributes = parseTagAttributes(attributesRaw);
+  const output: string[] = [];
+
+  if (attributes.title) {
+    output.push(`## ${attributes.title}`);
+  }
+
+  if (attributes.subtitle) {
+    output.push(`**${attributes.subtitle}**`);
+  }
+
+  if (attributes.description) {
+    output.push(attributes.description);
+  }
+
+  const links: string[] = [];
+  if (attributes.primaryLabel && attributes.primaryHref) {
+    links.push(`[${attributes.primaryLabel}](${attributes.primaryHref})`);
+  }
+  if (attributes.secondaryLabel && attributes.secondaryHref) {
+    links.push(`[${attributes.secondaryLabel}](${attributes.secondaryHref})`);
+  }
+
+  if (links.length > 0) {
+    output.push(links.join(' | '));
+  }
+
+  return output.join('\n\n').trim();
+}
+
+function renderLegacyCallout(attributesRaw: string, inner: string): string {
+  const attributes = parseTagAttributes(attributesRaw);
+  const title = attributes.title || 'Note';
+  const contentLines = inner
+    .trim()
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const quotedBody = contentLines.map((line) => `> ${line}`).join('\n');
+
+  if (!quotedBody) {
+    return `> **${title}**`;
+  }
+
+  return [`> **${title}**`, '>', quotedBody].join('\n');
+}
+
+function renderLegacyCards(cardBlock: string): string {
+  const items: string[] = [];
+  const cardPattern = /<Card([^>]*?)(?:\/>|>([\s\S]*?)<\/Card>)/g;
+
+  for (const match of cardBlock.matchAll(cardPattern)) {
+    const attributes = parseTagAttributes(match[1] ?? '');
+    const title = attributes.title || 'Untitled';
+    const href = attributes.href || '#';
+    const meta = attributes.meta ? ` - ${attributes.meta}` : '';
+    const innerContent = compactWhitespace(stripLegacyLayoutTags(match[2] ?? ''));
+    const suffix = innerContent ? `: ${innerContent}` : '';
+
+    items.push(`- [${title}](${href})${meta}${suffix}`);
+  }
+
+  return items.join('\n');
+}
+
+function normalizeLegacyMdx(content: string): string {
+  let normalized = content;
+
+  normalized = normalized.replace(/<Hero([\s\S]*?)\/>/g, (_, attributesRaw) => {
+    return `\n${renderLegacyHero(String(attributesRaw))}\n`;
+  });
+
+  normalized = normalized.replace(/<Callout([^>]*)>([\s\S]*?)<\/Callout>/g, (_, attributesRaw, inner) => {
+    return `\n${renderLegacyCallout(String(attributesRaw), String(inner))}\n`;
+  });
+
+  normalized = normalized.replace(/<CardGrid>([\s\S]*?)<\/CardGrid>/g, (_, cardBlock) => {
+    return `\n${renderLegacyCards(String(cardBlock))}\n`;
+  });
+
+  normalized = stripLegacyLayoutTags(normalized)
+    .replace(/<\/?(Card|CardGrid|Callout|Hero)\b[^>]*>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return normalized;
 }
 
 export function slugifyHeading(value: string): string {
@@ -136,10 +251,13 @@ const loadDocs = cache(async (): Promise<DocPage[]> => {
       const rawFile = await fs.readFile(absolutePath, 'utf8');
       const { data, content } = matter(rawFile);
       const frontmatter = data as Frontmatter;
+      const normalizedBody = absolutePath.endsWith('.mdx')
+        ? normalizeLegacyMdx(content)
+        : content.trim();
 
       const relativePath = path.relative(DOCS_ROOT, absolutePath);
       const slug = normalizeSlug(relativePath);
-      const safeSlug = slug.length > 0 ? slug : ['getting-started'];
+      const safeSlug = slug.length > 0 ? slug : ['home'];
 
       const parsedOrder = Number(frontmatter.order);
       const order = Number.isFinite(parsedOrder) ? parsedOrder : 999;
@@ -152,8 +270,8 @@ const loadDocs = cache(async (): Promise<DocPage[]> => {
         section: frontmatter.section?.trim() || 'General',
         order,
         updated: frontmatter.updated?.trim() || null,
-        body: content.trim(),
-        toc: extractToc(content),
+        body: normalizedBody,
+        toc: extractToc(normalizedBody),
       } satisfies DocPage;
     })
   );
@@ -180,6 +298,18 @@ export async function getAllDocSlugs(): Promise<string[][]> {
 
 export async function getFirstDoc(): Promise<DocPage | null> {
   const docs = await loadDocs();
+  const homeDoc = docs.find((doc) => doc.slugPath === 'home');
+
+  if (homeDoc) {
+    return homeDoc;
+  }
+
+  const gettingStartedDoc = docs.find((doc) => doc.slugPath === 'getting-started');
+
+  if (gettingStartedDoc) {
+    return gettingStartedDoc;
+  }
+
   return docs[0] || null;
 }
 

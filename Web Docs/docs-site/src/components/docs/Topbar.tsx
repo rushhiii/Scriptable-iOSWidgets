@@ -6,9 +6,10 @@ import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 
 const topLinks = [
-  { label: 'Home', href: '/docs/getting-started' },
-  { label: 'Guides', href: '/docs/guides/content-architecture' },
-  { label: 'Components', href: '/docs/components/callouts-and-tips' },
+  { label: 'Home', href: '/docs/home' },
+  { label: 'Installation', href: '/docs/installation' },
+  { label: 'Widgets', href: '/docs/widgets' },
+  { label: 'Changelog', href: '/docs/changelog' },
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
@@ -25,7 +26,7 @@ export function DocsTopbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-line/35 bg-page/90 backdrop-blur-xl">
       <div className="mx-auto grid h-16 w-full max-w-docs grid-cols-[auto_1fr_auto] items-center gap-3 px-4 md:h-[74px] md:gap-6 md:px-8">
-        <Link href="/docs/getting-started" className="group flex min-w-0 items-center gap-3">
+        <Link href="/docs/home" className="group flex min-w-0 items-center gap-3">
           <span className="grid h-9 w-9 place-content-center rounded-xl border border-brand/60 bg-brand/20 font-display text-sm font-semibold text-ink transition group-hover:border-brand group-hover:bg-brand/30">
             S
           </span>

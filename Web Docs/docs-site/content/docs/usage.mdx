@@ -1,0 +1,41 @@
+---
+title: Usage
+description: Common configuration patterns, parameters, and maintenance tips.
+section: Start Here
+---
+
+## Configure widget settings
+
+Each widget uses Scriptable settings to pass parameters. Open the widget settings and set:
+
+- Script: the saved widget script.
+- When Interacting: Run Script.
+- Parameter: comma-separated values described on each widget page.
+
+## Parameter format
+
+Parameters are usually comma-separated values. Examples:
+
+- temp,light
+- col,pg2
+- zen,12,m
+
+If you are unsure, leave the field empty and start with defaults.
+
+## Updates and refresh cadence
+
+Widgets refresh on iOS schedule. Most scripts also include a refresh timer. If you need a manual refresh, open Scriptable and run the script.
+
+## Data sources
+
+- OpenWeather for weather and AQI.
+- Google Sheets or Apps Script for schedules, countdowns, and quotes.
+- GitHub API for stats widgets.
+- Notion for the advanced countdown pipeline.
+
+## Troubleshooting
+
+- Run the script in Scriptable and read the console output.
+- Verify API keys or sheet URLs are correct.
+- Confirm Location access for widgets that auto-detect position.
+- Clear Scriptable cache if a widget keeps showing stale data.

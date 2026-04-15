@@ -21,6 +21,30 @@ type RouteParams = {
   slug?: string[];
 };
 
+function normalizeDocHref(href?: string): string | undefined {
+  if (!href) {
+    return href;
+  }
+
+  if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+    return href;
+  }
+
+  if (/^https?:\/\//.test(href)) {
+    return href;
+  }
+
+  if (!href.startsWith('/')) {
+    return href;
+  }
+
+  if (href === '/docs' || href.startsWith('/docs/')) {
+    return href;
+  }
+
+  return `/docs${href}`;
+}
+
 function flattenText(value: React.ReactNode): string {
   if (typeof value === 'string' || typeof value === 'number') {
     return String(value);
@@ -126,11 +150,12 @@ export default async function DocsPage({
       </h3>
     ),
     a: ({ href, children, ...props }) => {
-      const isExternal = href?.startsWith('http');
+      const normalizedHref = normalizeDocHref(href);
+      const isExternal = normalizedHref?.startsWith('http');
 
       return (
         <a
-          href={href}
+          href={normalizedHref}
           className="font-medium text-brand underline decoration-brand/30 underline-offset-4 transition-colors hover:text-ink"
           target={isExternal ? '_blank' : undefined}
           rel={isExternal ? 'noreferrer' : undefined}
