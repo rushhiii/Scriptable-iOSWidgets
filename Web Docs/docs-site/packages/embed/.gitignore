@@ -1,2 +1,4 @@
 dist/
 standalone/
+!src/standalone/
+!src/standalone/index.ts
