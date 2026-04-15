@@ -1,4 +1,4 @@
-import { type GitBookSiteContext, checkIsRootSiteContext } from '@/lib/context';
+import type { GitBookSiteContext } from '@/lib/context';
 import { isSiteIndexable } from '@/lib/seo';
 
 /**
@@ -6,11 +6,9 @@ import { isSiteIndexable } from '@/lib/seo';
  */
 export async function serveRobotsTxt(context: GitBookSiteContext) {
     const { linker } = context;
-
-    const isRoot = checkIsRootSiteContext(context);
     const isIndexable = await isSiteIndexable(context);
 
-    const sitemapPath = linker.toPathInSpace(isRoot ? '/sitemap.xml' : '/sitemap-pages.xml');
+    const sitemapPath = linker.toPathInSpace('/sitemap-pages.xml');
     const sitemapUrl = linker.toAbsoluteURL(sitemapPath);
 
     const lines = isIndexable

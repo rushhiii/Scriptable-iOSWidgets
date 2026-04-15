@@ -781,6 +781,7 @@ function encodePathInSiteContent(
                 ],
             };
         case 'sitemap.xml':
+            return { pathname: 'sitemap-pages.xml', routeType: 'static' };
         case 'sitemap-pages.xml':
         case 'robots.txt':
         case '~gitbook/embed/script.js':
