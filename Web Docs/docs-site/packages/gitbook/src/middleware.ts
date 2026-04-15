@@ -57,9 +57,34 @@ export const config = {
 
 type URLWithMode = { url: URL; mode: 'url' | 'url-host' };
 
+function getDefaultPublishedSitePath(): string {
+    const fallback = 'gitbook.com/docs';
+    const raw = process.env.GITBOOK_DEFAULT_SITE_URL?.trim();
+
+    if (!raw) {
+        return fallback;
+    }
+
+    try {
+        const normalizedInput = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+        const parsed = new URL(normalizedInput);
+        const path = `${parsed.host}${parsed.pathname}`.replace(/\/+$/, '');
+        return path || fallback;
+    } catch {
+        return fallback;
+    }
+}
+
 export async function middleware(request: NextRequest) {
     try {
         const requestURL = new URL(request.url);
+
+        // Redirect the renderer root to a published site path so bare domain visits don't 404.
+        if (request.nextUrl.pathname === '/') {
+            const target = getDefaultPublishedSitePath();
+            const redirectURL = new URL(`/url/${target}`, requestURL);
+            return NextResponse.redirect(redirectURL);
+        }
 
         // Reject malicious requests
         const rejectResponse = await validateServerActionRequest(request);
