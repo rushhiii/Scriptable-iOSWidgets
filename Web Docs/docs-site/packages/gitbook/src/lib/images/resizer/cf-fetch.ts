@@ -17,17 +17,19 @@ export async function resizeImageWithCFFetch(
     const logger = getLogger().subLogger('imageResizing');
     logger.log(`resize image using cf-fetch: ${input}`);
 
+    const requestInit: RequestInit & { cf: { image: CloudflareImageOptions } } = {
+        headers: {
+            // Pass the `Accept` header, as Cloudflare uses this to validate the format.
+            Accept:
+                resizeOptions.format === 'json'
+                    ? 'application/json'
+                    : `image/${resizeOptions.format || 'jpeg'}`,
+        },
+        signal,
+        cf: { image: resizeOptions },
+    };
+
     return copyImageResponse(
-        await fetch(input, {
-            headers: {
-                // Pass the `Accept` header, as Cloudflare uses this to validate the format.
-                Accept:
-                    resizeOptions.format === 'json'
-                        ? 'application/json'
-                        : `image/${resizeOptions.format || 'jpeg'}`,
-            },
-            signal,
-            cf: { image: resizeOptions },
-        })
+        await fetch(input, requestInit)
     );
 }
