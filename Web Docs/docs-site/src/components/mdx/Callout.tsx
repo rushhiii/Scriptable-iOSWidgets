@@ -1,17 +1,20 @@
 import type { ReactNode } from "react";
 
 type CalloutVariant = "note" | "warning" | "tip";
+type ExtendedCalloutVariant = CalloutVariant | "updated" | "alert";
 
 type CalloutProps = {
   title?: string;
-  variant?: CalloutVariant;
+  variant?: ExtendedCalloutVariant;
   children: ReactNode;
 };
 
-const titleMap: Record<CalloutVariant, string> = {
+const titleMap: Record<ExtendedCalloutVariant, string> = {
   note: "Note",
   warning: "Warning",
   tip: "Tip",
+  updated: "Updated",
+  alert: "Alert",
 };
 
 export function Callout({ title, variant = "note", children }: CalloutProps) {

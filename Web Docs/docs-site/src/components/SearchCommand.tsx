@@ -40,6 +40,7 @@ export function SearchCommand() {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchItem[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -72,6 +73,26 @@ export function SearchCommand() {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+      if (!target) {
+        return;
+      }
+
+      if (!modalRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
   const results = useMemo(() => {
     const trimmed = query.trim();
     if (!trimmed) {
@@ -90,30 +111,41 @@ export function SearchCommand() {
       <button className="search-trigger" type="button" onClick={() => setOpen(true)}>
         <Search className="search-icon" aria-hidden="true" size={16} />
         <span className="search-text">Search...</span>
-        <span className="search-kbd">Ctrl K</span>
+        <span className="search-kbd" aria-hidden="true">
+          <span className="search-kbd-key">Ctrl</span>
+          <span className="search-kbd-key">K</span>
+        </span>
       </button>
       {open ? (
         <div
           role="dialog"
           aria-modal="true"
           className="search-overlay"
-          onClick={() => setOpen(false)}
         >
           <div
+            ref={modalRef}
             className="search-modal"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="search-input-row">
-              <input
-                ref={inputRef}
-                placeholder="Search docs, widgets, and setup guides"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="search-input"
-              />
-              <button className="action-button" type="button" onClick={() => setOpen(false)}>
-                Close
-              </button>
+              <div className="search-input-shell">
+                <Search className="search-input-icon" aria-hidden="true" size={18} />
+                <input
+                  ref={inputRef}
+                  placeholder="Search..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="search-input"
+                />
+                <button
+                  className="search-esc"
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close search dialog"
+                >
+                  Esc
+                </button>
+              </div>
             </div>
             <div className="search-results">
               {results.length ? (
