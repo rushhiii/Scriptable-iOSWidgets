@@ -47,7 +47,7 @@ function getAdaptiveVisitorClaimsReader(url: string, contextId: string) {
                 if (!res.ok) {
                     return null;
                 }
-                return await res.json<AdaptiveVisitorClaims>();
+                return (await res.json()) as AdaptiveVisitorClaims;
             } catch {
                 return null;
             }
