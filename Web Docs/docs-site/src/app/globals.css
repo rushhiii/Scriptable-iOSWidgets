@@ -979,7 +979,7 @@ main {
 
   position: sticky;
   /* top: -0.5rem; */
-  top: -0.1rem;
+  top: -0.2rem;
   /* left: 1rem; */
   z-index: 1;
   display: flex;
@@ -1074,6 +1074,10 @@ main {
   /* font-family: Inter; */
      /* font-family: Inter,Inter Fallback,system-ui,arial; */
   background: var(--sidebar-item-active-bg);
+    /* background: linear-gradient(180deg,
+      color-mix(in srgb, var(--sidebar-item-active-bg) 92%, transparent) 0%,
+      color-mix(in srgb, var(--sidebar-item-active-bg) 72%, transparent) 100%); */
+
   color: color-mix(in oklab, rgb(255, 255, 255) 50%, transparent);
   /* color: color-mix(in oklab, var(--sidebar-item-active) 40%, transparent); */
 
@@ -1093,9 +1097,9 @@ main {
   /* font-family: "CustomFont_content", sans-serif; */
 
   font-weight: 500;
-  background: linear-gradient(180deg,
+  /* background: linear-gradient(180deg,
       color-mix(in srgb, var(--sidebar-item-active-bg) 92%, transparent) 0%,
-      color-mix(in srgb, var(--sidebar-item-active-bg) 72%, transparent) 100%);
+      color-mix(in srgb, var(--sidebar-item-active-bg) 72%, transparent) 100%); */
 }
 
 .sidebar-link[data-active="true"] {
@@ -1160,14 +1164,17 @@ main {
   /* background: color-mix(in srgb, var(--bg) 82%, transparent); */
 }
 
-.sidebar-group[data-active="true"]:hover .sidebar-group-toggle {
+.sidebar-link-group[data-active="true"]:hover + .sidebar-group-toggle {
   color: color-mix(in oklab, rgb(255, 255, 255) 50%, transparent);
-
 }
 
 .sidebar-group-toggle:hover {
   background: var(--sidebar-item-hover-bg);
-  color: var(--sidebar-item-text);
+  color: var(--sidebar-item-active);
+
+  /* color: color-mix(in oklab, rgb(255, 255, 255) 50%, transparent); */
+
+  /* color: var(--sidebar-item-text); */
 }
 
 .sidebar-group-toggle svg {
