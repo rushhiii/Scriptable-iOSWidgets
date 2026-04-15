@@ -156,6 +156,19 @@ function shouldFilterMaliciousRequests(requestURL: URL): boolean {
     return false;
 }
 
+function getSiteOAuthAuthorizeMatch(siteRequestURL: URL, oauthServerURL: URL): { siteId: string } | null {
+    const oauthServerPath = removeLeadingSlash(removeTrailingSlash(oauthServerURL.pathname));
+    const escapedOauthServerPath = oauthServerPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`(?:^|/)~gitbook/${escapedOauthServerPath}/([^/]+)/authorize/?$`);
+    const match = siteRequestURL.pathname.match(pattern);
+
+    if (!match?.[1]) {
+        return null;
+    }
+
+    return { siteId: match[1] };
+}
+
 /**
  * Handle request that are targetting the site routes group.
  */
@@ -209,15 +222,13 @@ async function serveSiteRoutes(requestURL: URL, request: NextRequest) {
     // Handler that forwards redirections from upstream auth provider during a site's OAuth /authorize session
     // back to the site's OAuth server.
     const oauthServerURL = new URL(GITBOOK_OAUTH_SERVER_URL);
-    const siteOAuthAuthorizeMatch = new URLPattern({
-        pathname: `*/~gitbook/${oauthServerURL.pathname.substring(1)}/:siteId/authorize`,
-    }).exec(siteRequestURL.toString());
+    const siteOAuthAuthorizeMatch = getSiteOAuthAuthorizeMatch(siteRequestURL, oauthServerURL);
 
     if (siteOAuthAuthorizeMatch) {
-        const siteId = siteOAuthAuthorizeMatch.pathname.groups.siteId;
+        const siteId = siteOAuthAuthorizeMatch.siteId;
         const siteOAuthAuthorizeURL = new URL(oauthServerURL);
         siteOAuthAuthorizeURL.pathname += `/${siteId}/authorize`;
-        siteOAuthAuthorizeURL.search = siteOAuthAuthorizeMatch.search.input.replace('?', '');
+        siteOAuthAuthorizeURL.search = siteRequestURL.search;
         return NextResponse.redirect(siteOAuthAuthorizeURL.toString());
     }
 
