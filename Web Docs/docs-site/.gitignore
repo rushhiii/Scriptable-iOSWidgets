@@ -17,3 +17,6 @@ yarn-error.log*
 # system
 .DS_Store
 Thumbs.db
+
+.vercel
+.env*.local
