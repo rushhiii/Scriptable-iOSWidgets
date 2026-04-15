@@ -1,6 +1,5 @@
 import { DocsSidebar } from '@/components/docs/Sidebar';
 import { DocsToc } from '@/components/docs/Toc';
-import { DocsTopbar } from '@/components/docs/Topbar';
 import {
   getAllDocSlugs,
   getDocBySlug,
