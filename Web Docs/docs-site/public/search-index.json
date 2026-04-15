@@ -1,0 +1,361 @@
+[
+  {
+    "title": "Changelog",
+    "summary": "Track widget updates and documentation changes.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "April 2026"
+      },
+      {
+        "depth": 2,
+        "title": "Coming next"
+      }
+    ],
+    "href": "/changelog/",
+    "section": "Reference"
+  },
+  {
+    "title": "Contributing",
+    "summary": "How to propose changes or add a new widget.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "What to include"
+      },
+      {
+        "depth": 2,
+        "title": "Submitting updates"
+      },
+      {
+        "depth": 2,
+        "title": "Report issues"
+      }
+    ],
+    "href": "/contributing/",
+    "section": "Reference"
+  },
+  {
+    "title": "Home",
+    "summary": "A GitBook-inspired landing page for Scriptable widget documentation.",
+    "headings": [],
+    "href": "/",
+    "section": "Home"
+  },
+  {
+    "title": "Installation",
+    "summary": "Install Scriptable, copy a widget, and get it running in minutes.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Prerequisites"
+      },
+      {
+        "depth": 2,
+        "title": "Install Scriptable"
+      },
+      {
+        "depth": 2,
+        "title": "Add a widget script"
+      },
+      {
+        "depth": 2,
+        "title": "Add the widget to your home screen"
+      },
+      {
+        "depth": 2,
+        "title": "Verify the setup"
+      }
+    ],
+    "href": "/installation/",
+    "section": "Start Here"
+  },
+  {
+    "title": "Usage",
+    "summary": "Common configuration patterns, parameters, and maintenance tips.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Configure widget settings"
+      },
+      {
+        "depth": 2,
+        "title": "Parameter format"
+      },
+      {
+        "depth": 2,
+        "title": "Updates and refresh cadence"
+      },
+      {
+        "depth": 2,
+        "title": "Data sources"
+      },
+      {
+        "depth": 2,
+        "title": "Troubleshooting"
+      }
+    ],
+    "href": "/usage/",
+    "section": "Start Here"
+  },
+  {
+    "title": "AQI and Temperature Widget",
+    "summary": "Dual mode air quality and temperature widget powered by OpenWeather.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Parameters"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      },
+      {
+        "depth": 2,
+        "title": "Data sources"
+      }
+    ],
+    "href": "/widgets/aqi-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Birthday Life Progress Widget",
+    "summary": "Small widget that tracks age, days lived, and next birthday progress.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/birthday-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Countdown Widget v2",
+    "summary": "Advanced Notion and Google Sheets pipeline with calendar sync.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup snapshot"
+      },
+      {
+        "depth": 2,
+        "title": "Who this is for"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/countdown-widget-v2/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Countdown Widget",
+    "summary": "Track events with Google Sheets, offline cache, and flexible layouts.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Parameters"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/countdown-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "GitHub Stats Widget",
+    "summary": "GitHub profile, repo, and heatmap stats with 20 plus themes.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Parameters"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/github-stats-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Hindu Color Wear Widget",
+    "summary": "Daily color recommendation based on day of week.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Sizes"
+      }
+    ],
+    "href": "/widgets/hindu-color-wear-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Widget Collection",
+    "summary": "Every widget in this collection, organized by use case.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "At a glance"
+      }
+    ],
+    "href": "/widgets/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Quote Widget",
+    "summary": "Daily quotes from Google Sheets with flexible parameters.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Parameters"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/quote-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Class Schedule Widget",
+    "summary": "Pull a class schedule from a public Google Sheet CSV.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Parameters"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/schedule-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Modular Time Progress Widget",
+    "summary": "Visualize day, week, month, and year progress in a modular layout.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Parameters"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/time-progress-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Toyota Widget",
+    "summary": "Vehicle widget status and data. Coming soon.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Status"
+      }
+    ],
+    "href": "/widgets/toyota-widget/",
+    "section": "Widgets"
+  },
+  {
+    "title": "Dynamic Weather Widget",
+    "summary": "Minimal, responsive weather widget with gradient themes.",
+    "headings": [
+      {
+        "depth": 2,
+        "title": "Overview"
+      },
+      {
+        "depth": 2,
+        "title": "Setup"
+      },
+      {
+        "depth": 2,
+        "title": "Customization"
+      },
+      {
+        "depth": 2,
+        "title": "Notes"
+      }
+    ],
+    "href": "/widgets/weather-widget/",
+    "section": "Widgets"
+  }
+]

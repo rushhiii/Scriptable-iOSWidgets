@@ -1,0 +1,36 @@
+---
+title: AQI and Temperature Widget
+description: Dual mode air quality and temperature widget powered by OpenWeather.
+section: Widgets
+---
+
+![AQI widget preview](https://github.com/rushhiii/Scriptable-IOSWidgets/blob/main/.assets/aqi/openweatheraqi_showcase.png?raw=true)
+
+## Overview
+
+A small widget that toggles between air quality and temperature modes. It uses OpenWeather Air Pollution and Weather APIs, plus smart theming based on AQI or temperature range.
+
+## Setup
+
+1. Create a free OpenWeather account and generate an API key.
+2. Copy the script from the repository and save it as OpenWeatherAQI.js in Scriptable.
+3. Replace the API key string near the top of the script.
+4. Add a Scriptable small widget and select the script.
+
+## Parameters
+
+- temp: show temperature mode instead of AQI.
+- light: force light theme.
+- dark: force dark theme.
+- temp,light or temp,dark: combine mode and theme.
+
+## Notes
+
+<Callout title="Location permission" variant="warning">
+  This widget auto-detects your location. Make sure Scriptable has location access when you run the script the first time.
+</Callout>
+
+## Data sources
+
+- OpenWeather Air Pollution API
+- OpenWeather Current Weather API
