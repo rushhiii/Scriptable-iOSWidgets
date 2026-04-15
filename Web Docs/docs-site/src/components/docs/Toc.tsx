@@ -1,13 +1,50 @@
+'use client';
+
 import type { TocItem } from '@/lib/docs';
 import clsx from 'clsx';
+import { useEffect, useState } from 'react';
 
 type TocProps = {
   items: TocItem[];
 };
 
 export function DocsToc({ items }: TocProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!items.length) {
+      return;
+    }
+
+    const elements = items
+      .map((item) => document.getElementById(item.id))
+      .filter((element): element is HTMLElement => Boolean(element));
+
+    if (!elements.length) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      {
+        rootMargin: '0px 0px -65% 0px',
+        threshold: 0.2,
+      }
+    );
+
+    elements.forEach((element) => observer.observe(element));
+
+    return () => observer.disconnect();
+  }, [items]);
+
   return (
-    <aside className="surface-card sticky top-24 hidden max-h-[calc(100vh-7rem)] overflow-auto p-4 xl:block">
+    <aside className="surface-card sticky top-[96px] hidden max-h-[calc(100vh-7.2rem)] overflow-auto p-4 xl:block">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">On this page</p>
 
       {items.length === 0 ? (
@@ -19,9 +56,11 @@ export function DocsToc({ items }: TocProps) {
               <a
                 href={`#${item.id}`}
                 className={clsx(
-                  'block rounded-lg py-1 text-sm text-ink/75 transition-colors hover:text-brand',
+                  'block rounded-lg border border-transparent py-1 text-sm text-muted transition-colors hover:text-ink',
+                  activeId === item.id && 'border-brand/60 bg-brand/15 text-ink',
                   item.depth === 3 ? 'pl-4' : 'pl-0'
                 )}
+                aria-current={activeId === item.id ? 'true' : undefined}
               >
                 {item.text}
               </a>

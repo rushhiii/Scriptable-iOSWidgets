@@ -7,15 +7,19 @@ const config: Config = {
     extend: {
       colors: {
         page: 'rgb(var(--page) / <alpha-value>)',
+        pageSoft: 'rgb(var(--page-soft) / <alpha-value>)',
         panel: 'rgb(var(--panel) / <alpha-value>)',
+        panelStrong: 'rgb(var(--panel-strong) / <alpha-value>)',
         ink: 'rgb(var(--ink) / <alpha-value>)',
         muted: 'rgb(var(--muted) / <alpha-value>)',
         brand: 'rgb(var(--brand) / <alpha-value>)',
+        brandStrong: 'rgb(var(--brand-strong) / <alpha-value>)',
         line: 'rgb(var(--line) / <alpha-value>)',
         glow: 'rgb(var(--glow) / <alpha-value>)',
+        codebg: 'rgb(var(--code-bg) / <alpha-value>)',
       },
       boxShadow: {
-        soft: '0 14px 40px -22px rgba(19, 28, 34, 0.35)',
+        soft: '0 12px 26px -16px rgba(0, 20, 45, 0.45)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],

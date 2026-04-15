@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Mono, Fraunces, Space_Grotesk } from 'next/font/google';
+import { IBM_Plex_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
-const sans = Space_Grotesk({
-  subsets: ['latin'],
+const sans = localFont({
+  src: '../../public/fonts/inter-regular.woff2',
   variable: '--font-sans',
   display: 'swap',
 });
 
-const display = Fraunces({
-  subsets: ['latin'],
+const display = localFont({
+  src: '../../public/fonts/generalsans-medium.woff2',
   variable: '--font-display',
   display: 'swap',
 });
@@ -17,24 +18,41 @@ const display = Fraunces({
 const mono = IBM_Plex_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
-  weight: ['400', '500'],
+  weight: ['400', '500', '600'],
   display: 'swap',
 });
 
+function ThemeScript() {
+  const script = `(function(){
+    try {
+      var stored = localStorage.getItem('docs-theme');
+      var theme = stored || 'dark';
+      document.documentElement.dataset.theme = theme;
+    } catch (error) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();`;
+
+  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+}
+
 export const metadata: Metadata = {
-  title: 'Scriptable Docs Template',
-  description: 'Reusable docs starter inspired by GitBook style navigation.',
+  title: {
+    default: 'Scriptable iOS Widgets',
+    template: '%s | Scriptable iOS Widgets',
+  },
+  description: 'Modern, customizable documentation for a curated collection of Scriptable widgets.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable} ${mono.variable}`}>
-      <body className="font-sans text-ink antialiased">
-        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute -top-24 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-glow/25 blur-3xl" />
-          <div className="absolute right-[-180px] top-[18%] h-[420px] w-[420px] rounded-full bg-brand/20 blur-3xl" />
-          <div className="absolute inset-0 bg-[linear-gradient(transparent_95%,rgba(0,0,0,0.05)_100%)] bg-[length:100%_40px] opacity-20" />
-        </div>
+    <html
+      lang="en"
+      className={`${sans.variable} ${display.variable} ${mono.variable} theme-gradient tint`}
+      suppressHydrationWarning
+    >
+      <body className="site-background font-sans text-ink antialiased">
+        <ThemeScript />
         {children}
       </body>
     </html>

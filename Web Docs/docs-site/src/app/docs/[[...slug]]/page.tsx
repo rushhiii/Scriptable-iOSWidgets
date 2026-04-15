@@ -72,7 +72,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${doc.title} | Scriptable Docs Template`,
+    title: `${doc.title} | Scriptable iOS Widgets`,
     description: doc.description,
   };
 }
@@ -142,7 +142,7 @@ export default async function DocsPage({
     },
     blockquote: ({ children, ...props }) => (
       <blockquote
-        className="rounded-2xl border-l-4 border-brand/70 bg-brand/10 px-5 py-4 text-ink"
+        className="rounded-2xl border-l-4 border-brand/70 bg-brand/15 px-5 py-4 text-ink"
         {...props}
       >
         {children}
@@ -150,7 +150,7 @@ export default async function DocsPage({
     ),
     pre: ({ children, ...props }) => (
       <pre
-        className="overflow-x-auto rounded-2xl border border-line bg-ink px-4 py-3 text-sm text-white"
+        className="overflow-x-auto rounded-2xl border border-line/50 bg-codebg px-4 py-3 text-sm text-[rgb(var(--code-text))]"
         {...props}
       >
         {children}
@@ -164,17 +164,17 @@ export default async function DocsPage({
   };
 
   return (
-    <div className="pb-16">
+    <div className="page-shell pb-16">
       <DocsTopbar />
 
-      <div className="mx-auto mt-6 grid w-full max-w-docs grid-cols-12 gap-4 px-4 md:gap-6 md:px-8">
+      <div className="mx-auto mt-5 grid w-full max-w-docs grid-cols-12 gap-4 px-4 md:gap-6 md:px-8">
         <div className="col-span-12 lg:col-span-3 fade-in-up">
           <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
         </div>
 
-        <main className="col-span-12 lg:col-span-9 xl:col-span-6 fade-in-up fade-delay-1">
-          <article className="surface-card p-6 md:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand/80">
+        <main className="col-span-12 lg:col-span-6 xl:col-span-6 fade-in-up fade-delay-1">
+          <article className="surface-card p-6 md:p-8 lg:p-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand/85">
               {doc.section}
             </p>
 
@@ -192,17 +192,17 @@ export default async function DocsPage({
               </p>
             ) : null}
 
-            <div className="prose prose-lg mt-10 max-w-none prose-headings:font-display prose-headings:text-ink prose-p:text-ink/90 prose-li:text-ink/85">
+            <div className="prose prose-lg mt-10 max-w-none prose-headings:font-display prose-headings:text-ink prose-p:text-ink/90 prose-strong:text-ink prose-li:text-ink/85 prose-code:text-brand">
               <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                 {doc.body}
               </ReactMarkdown>
             </div>
 
-            <div className="mt-12 grid gap-3 border-t border-line/80 pt-6 sm:grid-cols-2">
+            <div className="mt-12 grid gap-3 border-t border-line/40 pt-6 sm:grid-cols-2">
               {adjacent.previous ? (
                 <Link
                   href={`/docs/${adjacent.previous.slugPath}`}
-                  className="rounded-2xl border border-line bg-panel px-4 py-3 transition-colors hover:border-brand/40 hover:bg-brand/5"
+                  className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 transition-colors hover:border-brand/60 hover:bg-brand/15"
                 >
                   <p className="text-xs uppercase tracking-[0.16em] text-muted">Previous</p>
                   <p className="mt-1 font-medium text-ink">{adjacent.previous.title}</p>
@@ -214,7 +214,7 @@ export default async function DocsPage({
               {adjacent.next ? (
                 <Link
                   href={`/docs/${adjacent.next.slugPath}`}
-                  className="rounded-2xl border border-line bg-panel px-4 py-3 text-left transition-colors hover:border-brand/40 hover:bg-brand/5"
+                  className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 text-left transition-colors hover:border-brand/60 hover:bg-brand/15"
                 >
                   <p className="text-xs uppercase tracking-[0.16em] text-muted">Next</p>
                   <p className="mt-1 font-medium text-ink">{adjacent.next.title}</p>

@@ -15,10 +15,10 @@ function SidebarList({
   currentSlugPath: string;
 }) {
   return (
-    <nav className="space-y-5">
+    <nav className="space-y-6">
       {navigation.map((section, sectionIndex) => (
-        <div key={section.section} className={clsx('space-y-1.5', sectionIndex > 0 && 'pt-1')}>
-          <p className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted/90">
+        <div key={section.section} className={clsx('space-y-2', sectionIndex > 0 && 'pt-2')}>
+          <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted/85">
             {section.section}
           </p>
 
@@ -30,10 +30,10 @@ function SidebarList({
                 key={page.slugPath}
                 href={`/docs/${page.slugPath}`}
                 className={clsx(
-                  'block rounded-xl px-2 py-2 text-sm transition-colors',
+                  'block rounded-xl border px-3 py-2 text-sm transition-colors',
                   isActive
-                    ? 'bg-brand/12 font-medium text-brand'
-                    : 'text-ink/80 hover:bg-ink/5 hover:text-ink'
+                    ? 'border-brand/70 bg-brand/20 font-semibold text-ink shadow-soft'
+                    : 'border-transparent text-muted hover:border-line/45 hover:bg-panel/55 hover:text-ink'
                 )}
               >
                 {page.title}
@@ -53,12 +53,12 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
         <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-ink">
           Browse docs
         </summary>
-        <div className="border-t border-line/80 px-2 pb-4 pt-3">
+        <div className="border-t border-line/40 px-3 pb-4 pt-3">
           <SidebarList navigation={navigation} currentSlugPath={currentSlugPath} />
         </div>
       </details>
 
-      <aside className="surface-card sticky top-24 hidden max-h-[calc(100vh-7rem)] overflow-auto p-4 lg:block xl:p-5">
+      <aside className="surface-card sticky top-[96px] hidden max-h-[calc(100vh-7.2rem)] overflow-auto p-4 lg:block xl:p-5">
         <SidebarList navigation={navigation} currentSlugPath={currentSlugPath} />
       </aside>
     </>
