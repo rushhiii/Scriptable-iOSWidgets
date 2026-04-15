@@ -1,0 +1,34 @@
+{
+  "name": "docs-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/build-search-index.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/build-search-index.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@mdx-js/react": "^3.0.0",
+    "github-slugger": "^2.0.0",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^0.539.0",
+    "next": "16.2.3",
+    "next-mdx-remote": "^6.0.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-slug": "^6.0.0",
+    "remark-gfm": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.3",
+    "typescript": "^5"
+  }
+}
