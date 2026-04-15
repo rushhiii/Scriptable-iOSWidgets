@@ -1,0 +1,585 @@
+import {
+    type GitBookAnyContext,
+    type GitBookSpaceContext,
+    fetchSpaceContextByIds,
+} from '@/lib/context';
+import {
+    getDataOrNull,
+    getPageDocument,
+    getRevisionFile,
+    getRevisionReusableContent,
+    ignoreDataThrownError,
+} from '@/lib/data';
+import { type GitBookLinker, createLinker, linkerWithAbsoluteURLs } from '@/lib/links';
+import type {
+    ContentRef,
+    JSONDocument,
+    RevisionFile,
+    RevisionPageDocument,
+    RevisionReusableContent,
+    SiteSpace,
+    Space,
+} from '@gitbook/api';
+import type { Filesystem } from '@gitbook/openapi-parser';
+import assertNever from 'assert-never';
+import type React from 'react';
+
+import { PageIcon } from '@/components/PageIcon';
+
+import { getGitBookAppHref } from './app';
+import { getBlockById, getBlockTitle } from './document';
+import { resolvePageId } from './pages';
+import { findSiteSpaceBy, getFallbackSiteSpacePath, getLocalizedTitle } from './sites';
+import { getRevisionTags, resolveTag } from './tags';
+import type { ClassValue } from './tailwind';
+import { filterOutNullable } from './typescript';
+
+export interface ResolvedContentRef {
+    /** Text to render in the content ref */
+    text: string;
+    /** Additional sub text to render in the content ref */
+    subText?: string;
+    /** Icon associated with it */
+    icon?: React.ReactNode;
+    /** Emoji associated with the reference */
+    emoji?: string;
+    /** The content ref's ancestors */
+    ancestors?: { icon?: React.ReactNode; label: string; href?: string }[];
+    /** URL to open for the content ref */
+    href: string;
+    /** True if the content ref is active */
+    active: boolean;
+    /** File, if the reference is a file */
+    file?: RevisionFile;
+    /** Page document resolved from the content ref */
+    page?: RevisionPageDocument;
+    /** Resolved reusable content, if the ref points to reusable content on a revision. Also contains the space and revision used for resolution. */
+    reusableContent?: {
+        context: GitBookSpaceContext;
+        revisionReusableContent: RevisionReusableContent;
+    };
+    /**
+     * Space that the content ref belongs to (if applicable).
+     */
+    space?: Space;
+    /** Resolved OpenAPI spec, if the reference is an OpenAPI spec. */
+    openapi?: {
+        /** OpenAPI spec filesystem. */
+        filesystem: Filesystem;
+        /** Public URL of the OpenAPI spec */
+        publicURL: string | null;
+    };
+}
+
+export interface ResolveContentRefOptions {
+    /**
+     * Should the content ref be rendered as text.
+     * @default false
+     */
+    resolveAnchorText?: boolean;
+
+    /**
+     * Styles to apply to the icon.
+     */
+    iconStyle?: ClassValue;
+}
+
+/**
+ * Resolve a content reference from within a document.
+ * It wraps the normal resolution of content refs, to handle parts of the document
+ * that have been composed of reusable blocks from spaces outside the current site,
+ * and leverage the meta token to resolve them.
+ */
+export async function resolveContentRefInDocument(
+    document: JSONDocument,
+    contentRef: ContentRef,
+    context: GitBookAnyContext,
+    options: ResolveContentRefOptions = {}
+): Promise<ResolvedContentRef | null> {
+    if (isContentRefInDifferentSpace(contentRef, context)) {
+        const withinSite = !!getBestTargetSpaceFromSite(context, contentRef.space);
+        if (!withinSite) {
+            // When the content ref points to some content outside the current site,
+            // we use the potentially provided token to resolve the content ref in the target space.
+            // This is the case when the document is composed of reusable blocks from spaces outside the current site.
+            const token = document.meta?.token;
+            if (token) {
+                const dataFetch = context.dataFetcher.withToken({ apiToken: token });
+                return resolveContentRef(
+                    contentRef,
+                    {
+                        ...context,
+                        dataFetcher: dataFetch,
+                    },
+                    options
+                );
+            }
+        }
+    }
+
+    return resolveContentRef(contentRef, context, options);
+}
+
+/**
+ * Resolve a content reference to be rendered.
+ */
+export async function resolveContentRef(
+    contentRef: ContentRef,
+    context: GitBookAnyContext,
+    options: ResolveContentRefOptions = {}
+): Promise<ResolvedContentRef | null> {
+    const { resolveAnchorText = false, iconStyle } = options;
+    const { linker, dataFetcher, space, revision } = context;
+
+    const activePage = 'page' in context ? context.page : undefined;
+
+    switch (contentRef.kind) {
+        case 'url': {
+            return {
+                href: contentRef.url,
+                text: contentRef.url,
+                active: false,
+            };
+        }
+
+        case 'file': {
+            if (isContentRefInDifferentSpace(contentRef, context)) {
+                return resolveContentRefInSpace(contentRef.space, context, contentRef, options);
+            }
+
+            const file = getRevisionFile({ revision, fileId: contentRef.file });
+            if (file) {
+                return {
+                    href: file.downloadURL,
+                    text: file.name,
+                    active: false,
+                    file,
+                    space,
+                };
+            }
+            return null;
+        }
+
+        case 'anchor':
+        case 'page': {
+            if (isContentRefInDifferentSpace(contentRef, context)) {
+                return resolveContentRefInSpace(contentRef.space, context, contentRef, options);
+            }
+
+            const resolvePageResult =
+                !contentRef.page || contentRef.page === activePage?.id
+                    ? activePage
+                        ? { page: activePage, ancestors: [] }
+                        : undefined
+                    : resolvePageId(revision.pages, contentRef.page);
+
+            const page = resolvePageResult?.page;
+            const ancestors =
+                resolvePageResult?.ancestors.map((ancestor) => ({
+                    label: ancestor.linkTitle || ancestor.title,
+                    icon:
+                        ancestor.emoji || ancestor.icon ? (
+                            <PageIcon
+                                page={{ emoji: ancestor.emoji, icon: ancestor.icon }}
+                                style={iconStyle}
+                            />
+                        ) : null,
+                    href: linker.toPathForPage({ page: ancestor, pages: revision.pages }),
+                })) ?? [];
+            if (!page) {
+                return null;
+            }
+
+            const anchor = contentRef.kind === 'page' ? undefined : contentRef.anchor;
+            const isCurrentPage = page.id === activePage?.id;
+
+            let text = '';
+            let icon: React.ReactNode | undefined = undefined;
+            let emoji: string | undefined = undefined;
+            const href = linker.toPathForPage({ page, pages: revision.pages, anchor });
+
+            // Compute the text to display for the link
+            if (anchor) {
+                text = page.linkTitle || page.title;
+                ancestors.push({
+                    label: page.linkTitle || page.title,
+                    icon: <PageIcon page={page} style={iconStyle} />,
+                    href,
+                });
+
+                if (resolveAnchorText) {
+                    const document = await getPageDocument(context, page);
+                    if (document) {
+                        const block = getBlockById(document, anchor);
+                        if (block) {
+                            text = getBlockTitle(block);
+                        }
+                    }
+                }
+            } else {
+                const parentPage = (resolvePageResult?.ancestors || []).slice(-1).pop();
+                // When the looked up ref was a page group we use the page group to resolve title and icon.
+                // Otherwise use the resolved page title and icon.
+                const pageOrGroup =
+                    parentPage && contentRef.page === parentPage.id && parentPage.type === 'group'
+                        ? parentPage
+                        : page;
+                text = pageOrGroup.linkTitle || pageOrGroup.title;
+                emoji = isCurrentPage ? undefined : page.emoji;
+                icon = <PageIcon page={pageOrGroup} style={iconStyle} />;
+            }
+
+            return {
+                href,
+                text,
+                subText: page.description,
+                ancestors: ancestors,
+                emoji,
+                icon,
+                page,
+                active: !anchor && page.id === activePage?.id,
+                space,
+            };
+        }
+
+        case 'space': {
+            const targetSpace = !isContentRefInDifferentSpace(contentRef, context)
+                ? {
+                      space: context.space,
+                      siteSpace: 'siteSpace' in context ? context.siteSpace : null,
+                  }
+                : await getBestTargetSpace(context, contentRef.space);
+
+            if (!targetSpace) {
+                return null;
+            }
+
+            return {
+                href:
+                    targetSpace.siteSpace?.urls.published ??
+                    targetSpace.space.urls.published ??
+                    targetSpace.space.urls.app,
+                text: targetSpace.siteSpace?.title ?? targetSpace.space.title,
+                active: contentRef.space === space.id,
+            };
+        }
+
+        case 'user': {
+            const user = await getDataOrNull(dataFetcher.getUserById(contentRef.user));
+            if (user) {
+                return {
+                    href: `mailto:${user.email}`,
+                    text: user.displayName ?? user.email,
+                    active: false,
+                };
+            }
+            return null;
+        }
+
+        case 'collection': {
+            return {
+                href: getGitBookAppHref('/home'),
+                text: 'collection',
+                active: false,
+            };
+        }
+
+        // TODO-DEREF: Remove this once we have rolled out the new reusable content deref in the API.
+        case 'reusable-content': {
+            console.error(
+                'Reusable content should be handled at the API level, this should not be called'
+            );
+
+            // Figure out which space and revision the reusable content is in.
+            const container = await (async () => {
+                // without a space on the content ref, or if the space is the same as the current one, we can use the current revision.
+                if (!isContentRefInDifferentSpace(contentRef, context)) {
+                    return context;
+                }
+
+                // References inside reusable content from a different space need to resolve in the parent space.
+                // Create a context and a linker that ensures links are resolved with the correct parent, and are kept absolute.
+                const ctx = await createContextForSpace(contentRef.space, context);
+                if (!ctx) {
+                    return null;
+                }
+
+                return ctx.spaceContext;
+            })();
+
+            if (!container) {
+                return null;
+            }
+
+            const reusableContent = getRevisionReusableContent({
+                revision: container.revision,
+                reusableContentId: contentRef.reusableContent,
+            });
+
+            if (!reusableContent) {
+                return null;
+            }
+
+            return {
+                href: getGitBookAppHref(
+                    `/s/${container.space.id}/~/reusable/${reusableContent.id}`
+                ),
+                text: reusableContent.title,
+                active: false,
+                reusableContent: {
+                    context: container,
+                    revisionReusableContent: reusableContent,
+                },
+            };
+        }
+
+        case 'openapi': {
+            const openAPISpecVersionContent = await getDataOrNull(
+                dataFetcher.getLatestOpenAPISpecVersionContent({
+                    organizationId: context.organizationId,
+                    slug: contentRef.spec,
+                })
+            );
+
+            if (!openAPISpecVersionContent) {
+                return null;
+            }
+            return {
+                href: openAPISpecVersionContent.urls.source,
+                text: contentRef.spec,
+                active: false,
+                openapi: {
+                    filesystem: openAPISpecVersionContent.filesystem as Filesystem,
+                    publicURL: openAPISpecVersionContent.urls.public,
+                },
+            };
+        }
+
+        case 'tag': {
+            if (isContentRefInDifferentSpace(contentRef, context)) {
+                return resolveContentRefInSpace(contentRef.space, context, contentRef, options);
+            }
+
+            const tag = resolveTag(contentRef.tag, getRevisionTags(revision));
+            if (!tag) {
+                return null;
+            }
+
+            return {
+                href: linker.toPathInSpace(''),
+                text: tag.label,
+                active: false,
+                space,
+            };
+        }
+
+        default:
+            assertNever(contentRef);
+    }
+}
+
+/**
+ * Return true if a content ref points to another space than the current one.
+ */
+export function isContentRefInDifferentSpace<Ref extends ContentRef>(
+    contentRef: Ref,
+    context: GitBookAnyContext
+): contentRef is Ref & { space: string } {
+    return 'space' in contentRef && !!contentRef.space && contentRef.space !== context.space.id;
+}
+
+/**
+ * Fallback to resolve a content ref.
+ * Called if we can't resolve the content ref to have a potential fallback to display to the
+ * user instead of not found.
+ */
+export function resolveContentRefFallback(contentRef: ContentRef): ResolvedContentRef | null {
+    if ('space' in contentRef && contentRef.space) {
+        return {
+            href: getGitBookAppHref(`/s/${contentRef.space}`),
+            text: 'space',
+            active: false,
+        };
+    }
+    return null;
+}
+
+/**
+ * This function is used to get the best possible target space while resolving a content ref.
+ * It will try to return the space in the site context if it exists to avoid cross-site links.
+ */
+async function getBestTargetSpace(
+    context: GitBookAnyContext,
+    spaceId: string
+): Promise<{ space: Space; siteSpace: SiteSpace | null } | undefined> {
+    // In the context of sites, we try to find our target space in the site structure.
+    // because the url of this space will be in the same site.
+    const inSite = getBestTargetSpaceFromSite(context, spaceId);
+    if (inSite) {
+        return inSite;
+    }
+
+    const { dataFetcher } = context;
+    const fetchedSpace = await getDataOrNull(
+        dataFetcher.getSpace({
+            spaceId,
+            shareKey: context?.shareKey,
+        }),
+        [404, 403]
+    );
+
+    // Else we try return the fetched space from the API.
+    return fetchedSpace ? { space: fetchedSpace, siteSpace: null } : undefined;
+}
+
+/**
+ * Find the best target space for a content ref, from the current site.
+ */
+function getBestTargetSpaceFromSite(
+    context: GitBookAnyContext,
+    spaceId: string
+): { space: Space; siteSpace: SiteSpace | null } | undefined {
+    if ('site' in context) {
+        const found = findSiteSpaceBy(
+            context.structure,
+            (siteSpace) => siteSpace.space.id === spaceId
+        );
+        if (found) {
+            return { space: found.siteSpace.space, siteSpace: found.siteSpace };
+        }
+    }
+
+    return undefined;
+}
+
+async function resolveContentRefInSpace(
+    spaceId: string,
+    context: GitBookAnyContext,
+    contentRef: ContentRef,
+    options: ResolveContentRefOptions = {}
+) {
+    try {
+        const ctx = await createContextForSpace(spaceId, {
+            ...context,
+            shareKey: (() => {
+                // If the space is found in the current site, we use the current share key to generate links.
+                if ('site' in context) {
+                    return findSiteSpaceBy(
+                        context.structure,
+                        (siteSpace) => siteSpace.space.id === spaceId
+                    )
+                        ? context.shareKey
+                        : undefined;
+                }
+
+                return context.space.id === spaceId ? context.shareKey : undefined;
+            })(),
+        });
+
+        if (!ctx) {
+            return null;
+        }
+
+        const resolved = await resolveContentRef(contentRef, ctx.spaceContext, options);
+
+        if (!resolved) {
+            return null;
+        }
+
+        // Prefer the variant title when available, then the section title, then fallback to the space title.
+        const ancestorLabel = (() => {
+            if ('site' in context) {
+                const currentLanguage = context.locale;
+                const foundSiteSpace = findSiteSpaceBy(
+                    context.structure,
+                    (siteSpace) => siteSpace.space.id === spaceId
+                );
+                if (foundSiteSpace?.siteSpace) {
+                    return getLocalizedTitle(foundSiteSpace.siteSpace, currentLanguage);
+                }
+                if (foundSiteSpace?.siteSection) {
+                    return getLocalizedTitle(foundSiteSpace.siteSection, currentLanguage);
+                }
+                return ctx.spaceContext.space.title;
+            }
+
+            return ctx.spaceContext.space.title;
+        })();
+
+        return {
+            ...resolved,
+            ancestors: [
+                {
+                    label: ancestorLabel,
+                    href: ctx.baseURL.toString(),
+                },
+                ...(resolved.ancestors ?? []),
+            ].filter(filterOutNullable),
+        };
+    } catch (error) {
+        console.warn(`Error resolving content ref in space ${spaceId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Create a new context for a specific spaceId.
+ *
+ * As the resolved space may not be the same as the given spaceId, this function also
+ * returns the new space context and the base URL used for the linker.
+ */
+async function createContextForSpace(
+    spaceId: string,
+    context: GitBookAnyContext
+): Promise<{
+    spaceContext: GitBookSpaceContext;
+    baseURL: URL;
+} | null> {
+    const [spaceContext, bestTargetSpace] = await Promise.all([
+        ignoreDataThrownError(
+            fetchSpaceContextByIds(context, {
+                space: spaceId,
+                shareKey: context?.shareKey,
+                changeRequest: undefined,
+                revision: undefined,
+            })
+        ),
+        getBestTargetSpace(context, spaceId),
+    ]);
+    if (!spaceContext) {
+        return null;
+    }
+
+    const space = bestTargetSpace?.space ?? spaceContext.space;
+
+    let linker: GitBookLinker;
+
+    // Resolve URLs relative to the space.
+    const baseURL = new URL(
+        bestTargetSpace?.siteSpace?.urls.published ?? space.urls.published ?? space.urls.app
+    );
+
+    if (bestTargetSpace?.siteSpace && 'site' in context) {
+        // If we found the space ID in the current site context, we can resolve links relative to it in the site.
+        linker = context.linker.withOtherSiteSpace({
+            spaceBasePath: getFallbackSiteSpacePath(context, bestTargetSpace.siteSpace),
+        });
+    } else {
+        // Otherwise we generate absolute URLs as we are pointing to a different site.
+        linker = linkerWithAbsoluteURLs(
+            createLinker({
+                host: baseURL.host,
+                spaceBasePath: baseURL.pathname,
+                siteBasePath: baseURL.pathname,
+            })
+        );
+    }
+
+    return {
+        spaceContext: {
+            ...spaceContext,
+            linker,
+        },
+        baseURL,
+    };
+}

@@ -1,0 +1,2498 @@
+import {
+    CustomizationAIMode,
+    CustomizationBackground,
+    CustomizationCorners,
+    CustomizationDefaultMonospaceFont,
+    CustomizationDefaultThemeMode,
+    CustomizationDepth,
+    CustomizationHeaderPreset,
+    CustomizationIconsStyle,
+    CustomizationSidebarListStyle,
+    SiteSocialAccountPlatform,
+} from '@gitbook/api';
+import type { GitBookStandalone } from '@gitbook/embed';
+import { expect } from '@playwright/test';
+import jwt from 'jsonwebtoken';
+
+import { VISITOR_TOKEN_COOKIE } from '@/lib/visitors';
+
+import { getGitBookPreviewURL, getSiteAPIToken } from '../tests/utils';
+import {
+    type Test,
+    type TestsCase,
+    allDeprecatedThemePresets,
+    allLocales,
+    allSearchStyles,
+    allSidebarBackgroundStyles,
+    allThemeModes,
+    allThemes,
+    allTintColors,
+    getCustomizationURL,
+    headerLinks,
+    runTestCases,
+    setTimeToMorning,
+    waitForCookiesDialog,
+    waitForCoverImages,
+    waitForNotFound,
+} from './util';
+
+const AI_PROMPT = `You're being invoked by the GitBook CI/CD pipeline. Search for "Lorem ipsum", then return the first sentence of the first page you find.`;
+
+const overrideAIInitialState = () => {
+    const greeting = document.querySelector('[data-testid="ai-chat-greeting-title"]');
+    if (greeting) {
+        greeting.textContent = 'Good morning';
+    }
+};
+const overrideAIResponse = () => {
+    const userMessage = document.querySelector('[data-testid="ai-chat-message-user"]');
+    if (userMessage) {
+        userMessage.textContent = '[Replaced message] Chat message sent by the user';
+    }
+    const assistantMessage = document.querySelectorAll(
+        '[data-testid="ai-chat-message-assistant"] .ai-response-document'
+    );
+    assistantMessage.forEach((message) => {
+        message.innerHTML = '[Replaced message] AI chat response';
+    });
+    const suggestions = document.querySelectorAll('[data-testid="ai-chat-followup-suggestion"]');
+    suggestions.forEach((suggestion) => {
+        suggestion.textContent = 'Follow-up suggestion';
+    });
+};
+
+const searchTestCases: Test[] = [
+    {
+        name: 'Search - AI Mode: None - Complete flow',
+        url: getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.None,
+            },
+        }),
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            const searchInput = page.getByTestId('search-input');
+            await searchInput.focus();
+            await expect(page.getByTestId('search-results')).toHaveCount(0); // No pop-up yet because there's no recommended questions.
+
+            // Fill search input, expecting search results
+            await searchInput.fill('gitbook');
+            await expect(page.getByTestId('search-results')).toBeVisible({
+                timeout: 10_000,
+            });
+            const pageResults = await page.getByTestId('search-page-result').all();
+            await expect(pageResults.length).toBeGreaterThanOrEqual(1);
+            const pageSectionResults = await page.getByTestId('search-page-section-result').all();
+            await expect(pageSectionResults.length).toBeGreaterThanOrEqual(2);
+            await expect(page.getByTestId('search-ask-question')).toHaveCount(0); // No AI search results with aiMode=None.
+        },
+    },
+    {
+        name: 'Search - AI Mode: None - Keyboard shortcut',
+        url: getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.None,
+            },
+        }),
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await page.keyboard.press('ControlOrMeta+K');
+            await expect(page.getByTestId('search-input')).toBeFocused();
+        },
+    },
+    {
+        name: 'Search - AI Mode: None - URL query (Initial)',
+        url: `${getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.None,
+            },
+        })}&q=`,
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await expect(page.getByTestId('search-results')).toHaveCount(0); // No pop-up yet because there's no recommended questions.
+        },
+    },
+    {
+        name: 'Search - AI Mode: None - URL query (Results)',
+        url: `${getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.None,
+            },
+        })}&q=gitbook`,
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await expect(page.getByTestId('search-input')).toBeFocused();
+            await expect(page.getByTestId('search-input')).toHaveValue('gitbook');
+            await expect(page.getByTestId('search-results')).toBeVisible();
+        },
+    },
+    {
+        name: 'Search - AI Mode: Search - URL query (Results)',
+        url: `${getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.Search,
+            },
+        })}&q=gitbook`,
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await expect(page.getByTestId('search-input')).toBeFocused();
+            await expect(page.getByTestId('search-input')).toHaveValue('gitbook');
+            await expect(page.getByTestId('search-results')).toBeVisible();
+        },
+    },
+    {
+        name: 'Ask - AI Mode: Assistant - Complete flow',
+        url: getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.Assistant,
+            },
+        }),
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            const searchInput = page.locator('css=[data-testid="search-input"]');
+
+            // Focus search input, expecting recommended questions
+            await searchInput.focus();
+            await expect(page.getByTestId('search-results')).toBeVisible({
+                timeout: 30_000,
+            });
+            const recommendedQuestions = await page
+                .getByTestId('search-recommended-question')
+                .all();
+            await expect(recommendedQuestions.length).toBeGreaterThanOrEqual(1); // Expect at least 1 question
+
+            // Fill search input, expecting AI search option
+            await searchInput.fill(AI_PROMPT);
+            const aiSearchResult = page.getByTestId('search-ask-question');
+            await expect(aiSearchResult).toBeVisible();
+            await aiSearchResult.click();
+            await expect(page.getByTestId('ai-chat')).toBeVisible();
+            await expect(page.getByTestId('ai-chat-message-user').first()).toHaveText(AI_PROMPT);
+            await expect(page.getByTestId('ai-chat-message-assistant').first()).toBeVisible();
+            await expect(page.getByTestId('ai-chat-followup-suggestion')).toHaveCount(3, {
+                timeout: 60_000,
+            });
+            // Override text content for visual consistency in screenshots
+            await page.evaluate(overrideAIResponse);
+        },
+    },
+    {
+        name: 'Ask - AI Mode: Assistant - Keyboard shortcut',
+        url: getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.Assistant,
+            },
+        }),
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await page.keyboard.press('ControlOrMeta+I');
+            await expect(page.getByTestId('ai-chat')).toBeVisible();
+            await expect(page.getByTestId('ai-chat-input')).toBeFocused();
+            // Override text content for visual consistency in screenshots
+            await page.evaluate(overrideAIInitialState);
+        },
+    },
+    {
+        name: 'Ask - AI Mode: Assistant - Button',
+        url: getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.Assistant,
+            },
+        }),
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await page.getByTestId('ai-chat-button').click();
+            await expect(page.getByTestId('ai-chat')).toBeVisible();
+            await expect(page.getByTestId('ai-chat-input')).toBeFocused();
+            // Override text content for visual consistency in screenshots
+            await page.evaluate(overrideAIInitialState);
+        },
+    },
+    {
+        name: 'Ask - AI Mode: Assistant - URL query (Initial)',
+        url: `${getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.Assistant,
+            },
+        })}&ask=`,
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await expect(page.getByTestId('search-input')).not.toBeFocused();
+            await expect(page.getByTestId('search-input')).toBeEmpty();
+            await expect(page.getByTestId('ai-chat')).toBeVisible();
+            await expect(page.getByTestId('ai-chat-input')).toBeFocused();
+            // Override text content for visual consistency in screenshots
+            await page.evaluate(overrideAIInitialState);
+        },
+    },
+    {
+        name: 'Ask - AI Mode: Assistant - URL query (Results)',
+        url: `${getCustomizationURL({
+            ai: {
+                mode: CustomizationAIMode.Assistant,
+            },
+        })}&ask=${encodeURIComponent(AI_PROMPT)}`,
+        run: async (page) => {
+            await waitForCookiesDialog(page);
+            await expect(page.getByTestId('search-input')).not.toBeFocused();
+            await expect(page.getByTestId('search-input')).not.toHaveValue('What is GitBook?');
+            await expect(page.getByTestId('ai-chat')).toBeVisible();
+            await expect(page.getByTestId('ai-chat-message-user').first()).toHaveText(AI_PROMPT);
+            await expect(page.getByTestId('ai-chat-message-assistant').first()).toBeVisible();
+            await expect(page.getByTestId('ai-chat-followup-suggestion')).toHaveCount(3, {
+                timeout: 60_000,
+            });
+            // Override text content for visual consistency in screenshots
+            await page.evaluate(overrideAIResponse);
+        },
+    },
+];
+
+const testCases: TestsCase[] = [
+    {
+        name: 'GitBook Site (Single Variant)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/gitbook-doc/',
+        tests: [
+            {
+                name: 'Home',
+                url: '',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'No variants dropdown',
+                url: '',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    await expect(page.locator('[data-testid="space-dropdown-button"]')).toHaveCount(
+                        0
+                    );
+                },
+            },
+            {
+                name: 'Expandable TOC navigation',
+                url: '',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+
+                    // Verify "Navigation" link is not visible initially
+                    const navigationLink = page.getByRole('link', { name: 'Navigation' });
+                    await expect(navigationLink).not.toBeVisible();
+
+                    // Find and click the chevron element that is next to "Editor" in the TOC
+                    // It is a button inside the link
+                    const editorChevron = page
+                        .getByRole('link', { name: 'Editor' })
+                        .locator('button');
+                    await editorChevron.click();
+
+                    // Verify "Navigation" link becomes visible after expansion
+                    await expect(navigationLink).toBeVisible();
+                },
+            },
+            {
+                name: 'Expandable nested TOC navigation',
+                url: '',
+                screenshot: false,
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+
+                    // Verify "Spaces" link is not visible initially
+                    const navigationLink = page.getByRole('link', { name: 'Spaces' });
+                    await expect(navigationLink).not.toBeVisible();
+
+                    // Find and click the chevron element that is next to "Editor" in the TOC
+                    // It is a button inside the link
+                    const editorChevron = page
+                        .getByRole('link', { name: 'Editor' })
+                        .locator('button');
+                    await editorChevron.click();
+
+                    // At this stage the link should still not be visible
+                    await expect(navigationLink).not.toBeVisible();
+
+                    // Then we click 'Content Structure' chevron to expand further
+                    const contentStructureChevron = page
+                        .getByRole('link', { name: 'Content Structure' })
+                        .locator('button');
+                    await contentStructureChevron.click();
+
+                    // Verify "Spaces" link becomes visible after expansion
+                    await expect(navigationLink).toBeVisible();
+                },
+            },
+            {
+                name: 'Not found',
+                url: 'content-not-found',
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'GitBook Site (Multi Variants)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/multi-variants/',
+        tests: [
+            {
+                name: 'Variants dropdown',
+                url: '',
+                run: async (page) => {
+                    const spaceDrowpdown = page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDrowpdown.waitFor();
+                },
+            },
+            {
+                name: 'Default variant',
+                url: '',
+            },
+            {
+                name: 'RFC variant',
+                url: 'rfcs',
+            },
+            {
+                name: 'Customized variant titles are displayed',
+                url: '',
+                run: async (page) => {
+                    const spaceDropdown = page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDropdown.click();
+
+                    const variantSelectionDropdown = page.locator(
+                        'css=[data-testid="dropdown-menu"]'
+                    );
+                    // the customized space title
+                    await expect(
+                        variantSelectionDropdown.getByRole('menuitem', {
+                            name: 'Multi-Variants',
+                        })
+                    ).toBeVisible();
+
+                    // the NON-customized space title
+                    await expect(
+                        variantSelectionDropdown.getByRole('menuitem', {
+                            name: 'RFCs',
+                        })
+                    ).toBeVisible();
+                },
+            },
+            {
+                name: 'Switch variant with alternate link in metadata',
+                url: 'rfcs',
+                run: async (page) => {
+                    const spaceDropdown = page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDropdown.click();
+
+                    const variantSelectionDropdown = page.locator(
+                        'css=[data-testid="dropdown-menu"]'
+                    );
+
+                    // Click the variant space called 'Multi-Variants' for which
+                    // there is an alternate link in the current (RFC variant) page metadata
+                    await variantSelectionDropdown
+                        .getByRole('menuitem', {
+                            name: 'Multi-Variants',
+                        })
+                        .click();
+
+                    // It should navigate to the alternate link defined in the metadata (a completely different page)
+                    await page.waitForURL((url) =>
+                        url.pathname.includes('multi-variants/reference/api-reference/pets')
+                    );
+                    // Verify we are on the correct page by checking the h1
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'Pets' })
+                    ).toBeVisible();
+                },
+            },
+        ],
+    },
+    {
+        name: 'GitBook Site (Navigation when switching variant)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/',
+        tests: [
+            {
+                name: 'Keep navigation path/route when switching variant (Public)',
+                url: 'api-multi-versions/reference/api-reference/pets',
+                screenshot: false,
+                run: async (page) => {
+                    const spaceDropdown = await page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDropdown.click();
+
+                    const variantSelectionDropdown = page.locator(
+                        'css=[data-testid="dropdown-menu"]'
+                    );
+                    // Click the second variant in the dropdown
+                    await variantSelectionDropdown
+                        .getByRole('menuitem', {
+                            name: '2.0',
+                        })
+                        .click();
+
+                    // It should keep the current page path, i.e "reference/api-reference/pets" when navigating to the new variant
+                    await page.waitForURL((url) =>
+                        url.pathname.includes('api-multi-versions/2.0/reference/api-reference/pets')
+                    );
+                },
+            },
+            {
+                name: 'Keep navigation path/route when switching variant (Share link)',
+                url: 'api-multi-versions-share-links/8tNo6MeXg7CkFMzSSz81/reference/api-reference/pets',
+                screenshot: false,
+                run: async (page) => {
+                    const spaceDropdown = await page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDropdown.click();
+
+                    const variantSelectionDropdown = page.locator(
+                        'css=[data-testid="dropdown-menu"]'
+                    );
+
+                    // Click the second variant in the dropdown
+                    await variantSelectionDropdown
+                        .getByRole('menuitem', {
+                            name: '2.0',
+                        })
+                        .click();
+
+                    // It should keep the current page path, i.e "reference/api-reference/pets" when navigating to the new variant
+                    await page.waitForURL((url) =>
+                        url.pathname.includes(
+                            'api-multi-versions-share-links/8tNo6MeXg7CkFMzSSz81/2.0/reference/api-reference/pets'
+                        )
+                    );
+                },
+            },
+            {
+                name: 'Keep navigation path/route when switching variant (VA)',
+                screenshot: false,
+                url: () => {
+                    const privateKey = 'c26190fc-74b2-4b54-9fc7-df9941104953';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `api-multi-versions-va/reference/api-reference/pets?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    const spaceDropdown = await page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDropdown.click();
+
+                    const variantSelectionDropdown = page.locator(
+                        'css=[data-testid="dropdown-menu"]'
+                    );
+
+                    // Click the second variant in the dropdown
+                    await variantSelectionDropdown
+                        .getByRole('menuitem', {
+                            name: '2.0',
+                        })
+                        .click();
+
+                    // It should keep the current page path, i.e "reference/api-reference/pets" when navigating to the new variant
+                    await page.waitForURL((url) =>
+                        url.pathname.includes(
+                            'api-multi-versions-va/2.0/reference/api-reference/pets'
+                        )
+                    );
+                },
+            },
+        ],
+    },
+    {
+        name: 'Language Site (Navigation when switching language variant)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/yjs/',
+        tests: [
+            {
+                name: 'Should resolve to the same page in the new language variant when switching language variant (Source English -> Target Dutch)',
+                url: 'ecosystem/connection-provider',
+                screenshot: false,
+                run: async (page) => {
+                    const spaceDropdown = page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDropdown.click();
+
+                    const variantSelectionDropdown = page.locator(
+                        'css=[data-testid="dropdown-menu"]'
+                    );
+                    // Click the dutch language variant in the dropdown
+                    await variantSelectionDropdown
+                        .getByRole('menuitem', {
+                            name: 'Yjs (NL)',
+                        })
+                        .click();
+
+                    // It should keep the current page path, i.e "ecosysteem/connection-provider" when navigating to the NL variant
+                    await page.waitForURL((url) =>
+                        url.pathname.includes('nl/ecosysteem/connection-provider')
+                    );
+                    // Verify we are on the correct page by checking the h1
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'Connectieprovider' })
+                    ).toBeVisible();
+                },
+            },
+            {
+                name: 'Should resolve to the same page in the new language variant when switching language variant (Source Dutch -> Target Finnish)',
+                url: 'nl/ecosysteem/connection-provider',
+                screenshot: false,
+                run: async (page) => {
+                    const spaceDropdown = page
+                        .locator('[data-testid="space-dropdown-button"]')
+                        .locator('visible=true');
+                    await spaceDropdown.click();
+
+                    const variantSelectionDropdown = page.locator(
+                        'css=[data-testid="dropdown-menu"]'
+                    );
+                    // Click the finnish language variant in the dropdown
+                    await variantSelectionDropdown
+                        .getByRole('menuitem', {
+                            name: 'Yjs (FI)',
+                        })
+                        .click();
+
+                    // It should keep the current page path, i.e "ecosysteem/connection-provider" when navigating to the FI variant
+                    await page.waitForURL((url) =>
+                        url.pathname.includes('fi/ekosysteemi/connection-provider')
+                    );
+                    // Verify we are on the correct page by checking the h1
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'Yhteysvälittäjä' })
+                    ).toBeVisible();
+                },
+            },
+        ],
+    },
+    {
+        name: 'GitBook Site (Sections and Section Groups)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/sections/',
+        tests: [
+            {
+                name: 'Site with sections and section groups',
+                url: '',
+            },
+            {
+                name: 'Section group dropdown',
+                url: '',
+                run: async (page) => {
+                    await page.getByRole('button', { name: 'Test Section Group 1' }).hover();
+                    await expect(page.getByRole('link', { name: /Section B/ })).toBeVisible();
+                },
+            },
+            {
+                name: 'Section group link',
+                url: '',
+                screenshot: false,
+                run: async (page) => {
+                    const sectionGroupDropdown = await page.getByText('Test Section Group 1');
+                    await sectionGroupDropdown.hover();
+                    await page.getByText('Section B').click();
+                    await page.waitForURL((url) => url.pathname.includes('/sections/sections-4'));
+                },
+            },
+        ],
+    },
+    {
+        name: 'GitBook',
+        contentBaseURL: 'https://gitbook.com/docs/',
+        tests: [
+            {
+                name: 'Home',
+                url: '',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Not found',
+                url: 'content-not-found',
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Versioning',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'Revision',
+                url: '~/revisions/S55pwsEr5UVoroaOiWnP/blocks/headings',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Invalid revision',
+                url: '~/revisions/idnotfound/blocks/headings',
+                run: waitForNotFound,
+                screenshot: false,
+            },
+            {
+                name: 'Invalid change request',
+                url: '~/changes/idnotfound/blocks/headings',
+                run: waitForNotFound,
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'PDF',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'PDF',
+                url: '~gitbook/pdf?limit=10',
+                screenshot: {
+                    waitForTOCScrolling: false,
+                },
+                run: async (page) => {
+                    await expect(page.locator('[data-testid="print-button"]')).toBeVisible();
+                },
+            },
+        ],
+    },
+    {
+        name: 'Space PDF',
+        tests: [
+            {
+                name: 'Main content',
+                url: async () => {
+                    const data = await getSiteAPIToken(
+                        'https://gitbook.gitbook.io/test-gitbook-open/'
+                    );
+
+                    const searchParams = new URLSearchParams();
+                    searchParams.set('limit', '10');
+                    searchParams.set('token', data.apiToken);
+
+                    return `~space/${data.space}/~gitbook/pdf?${searchParams.toString()}`;
+                },
+                screenshot: false,
+                run: async (page) => {
+                    await expect(page.locator('[data-testid="print-button"]')).toBeVisible();
+                },
+            },
+            {
+                name: 'Change request',
+                url: async () => {
+                    const data = await getSiteAPIToken(
+                        'https://gitbook.gitbook.io/test-gitbook-open/'
+                    );
+
+                    const searchParams = new URLSearchParams();
+                    searchParams.set('limit', '10');
+                    searchParams.set('token', data.apiToken);
+
+                    return `~space/${data.space}/~/changes/HrtgUd5MlFusCMv1elA7/~gitbook/pdf?${searchParams.toString()}`;
+                },
+                screenshot: false,
+                run: async (page) => {
+                    await expect(page.locator('[data-testid="print-button"]')).toBeVisible();
+                },
+            },
+            {
+                name: 'Show error when missing token',
+                url: async () => {
+                    const data = await getSiteAPIToken(
+                        'https://gitbook.gitbook.io/test-gitbook-open/'
+                    );
+
+                    // Intentionally not setting the token to test error handling when the token is missing
+                    const searchParams = new URLSearchParams();
+                    searchParams.set('limit', '10');
+
+                    return `~space/${data.space}/~gitbook/pdf?${searchParams.toString()}`;
+                },
+                screenshot: false,
+                run: async (page, response) => {
+                    expect(response).not.toBeNull();
+                    expect(response?.status()).toBe(400);
+                    await expect(page.getByText('Missing API token')).toBeVisible();
+                },
+            },
+        ],
+    },
+    {
+        name: 'Site Previews',
+        skip: process.env.ARGOS_BUILD_NAME !== 'v2-vercel',
+        tests: [
+            {
+                name: 'Main content',
+                url: async () => {
+                    const data = await getSiteAPIToken(
+                        'https://gitbook.gitbook.io/test-gitbook-open/'
+                    );
+
+                    const searchParams = new URLSearchParams();
+                    searchParams.set('token', data.apiToken);
+
+                    return `url/${getGitBookPreviewURL(`${data.site}/?${searchParams.toString()}`)}`;
+                },
+                screenshot: false,
+                run: async (page) => {
+                    await expect(page.locator('[data-testid="table-of-contents"]')).toBeVisible();
+                },
+            },
+            {
+                name: 'With sections',
+                url: async () => {
+                    const data = await getSiteAPIToken('https://gitbook.com/docs');
+
+                    const searchParams = new URLSearchParams();
+                    searchParams.set('token', data.apiToken);
+
+                    return `url/${getGitBookPreviewURL(`${data.site}/?${searchParams.toString()}`)}`;
+                },
+                screenshot: false,
+                run: async (page) => {
+                    const sectionTabs = page.getByLabel('Sections');
+                    await expect(sectionTabs).toBeVisible();
+
+                    const sectionTabLinks = sectionTabs.getByRole('link');
+                    for (const link of await sectionTabLinks.all()) {
+                        const href = await link.getAttribute('href');
+                        expect(href?.includes('/preview/site_p4Xo4')).toBeTruthy();
+                    }
+                },
+            },
+            {
+                name: 'With customization cookie',
+                url: async () => {
+                    const data = await getSiteAPIToken(
+                        'https://gitbook.gitbook.io/test-gitbook-open/'
+                    );
+
+                    const searchParams = new URLSearchParams();
+                    searchParams.set('token', data.apiToken);
+
+                    return `url/${getGitBookPreviewURL(`${data.site}/?${searchParams.toString()}`)}`;
+                },
+                screenshot: false,
+                run: async (page) => {
+                    await expect(page.locator('[data-testid="table-of-contents"]')).toBeVisible();
+                    // Trademark exists by default
+                    expect(await page.getByTestId('gb-trademark').count()).toBeGreaterThanOrEqual(
+                        1
+                    ); // We output 2 trademark buttons that are quite different, and can only determine which one is appropriate based on screen size / CSS. So our check needs to be more lenient than "exactly 1".
+
+                    // Go to another page with the customization query to disable the trademark
+                    const pageBlocks = new URL(page.url());
+                    pageBlocks.pathname = `${pageBlocks.pathname.replace(/\/$/, '')}/blocks`;
+                    pageBlocks.search = getCustomizationURL({
+                        trademark: {
+                            enabled: false,
+                        },
+                    }).slice(1);
+                    await page.goto(pageBlocks.toString());
+                    // No trademark because customization is disabled
+                    await expect(page.getByTestId('gb-trademark')).toHaveCount(0);
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'Blocks' })
+                    ).toBeVisible();
+
+                    const pageBlocksCode = new URL(page.url());
+                    pageBlocksCode.pathname = `${pageBlocksCode.pathname.replace(/\/$/, '')}/code`;
+                    pageBlocksCode.search = '';
+                    await page.goto(pageBlocksCode.toString());
+                    // The trademark should not be visible because the cookie is still set,
+                    await expect(page.getByTestId('gb-trademark')).toHaveCount(0);
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'Code' })
+                    ).toBeVisible();
+                },
+            },
+            {
+                name: 'Redirect to app for authentication when missing token',
+                url: async () => {
+                    const data = await getSiteAPIToken('https://gitbook.com/docs');
+
+                    const searchParams = new URLSearchParams();
+                    // Intentionally not setting the token to test redirection for authentication
+
+                    return `url/${getGitBookPreviewURL(`${data.site}/?${searchParams.toString()}`)}`;
+                },
+                screenshot: false,
+                run: async (page) => {
+                    await page.waitForURL(
+                        (url) =>
+                            url.host === 'app.gitbook.com' && url.pathname.includes('/preview/auth')
+                    );
+                },
+            },
+        ],
+    },
+    {
+        name: 'Site subdirectory (proxy)',
+        skip: process.env.ARGOS_BUILD_NAME !== 'v2-vercel',
+        contentBaseURL: 'https://nextjs-gbo-proxy.vercel.app/documentation/',
+        tests: [
+            {
+                name: 'Main',
+                url: '',
+                fullPage: true,
+            },
+        ],
+    },
+    {
+        name: 'Site subdirectory (proxy) with VA',
+        skip: process.env.ARGOS_BUILD_NAME !== 'v2-vercel',
+        contentBaseURL: 'https://nextjs-gbo-proxy-va.vercel.app/va/docs/',
+        tests: [
+            {
+                name: 'Main',
+                url: () => {
+                    const privateKey =
+                        'rqSfA6x7eAKx1qDRCDq9aCXwivpUvQ8YkXeDdFvCCUa9QchIcM7pF1iJ4o7AGOU49spmOWjKoIPtX0pVUVQ81w==';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `?jwt_token=${token}`;
+                },
+                fullPage: true,
+            },
+        ],
+    },
+    {
+        name: 'Search & AI',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: searchTestCases,
+    },
+    {
+        name: 'Content tests',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'Text',
+                url: 'text-page',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Long text',
+                url: 'text-page/long-text',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Images',
+                url: 'blocks/block-images',
+                run: waitForCookiesDialog,
+                fullPage: true,
+                screenshot: { threshold: 0.9 },
+            },
+            {
+                name: 'Images (with zoom)',
+                url: 'blocks/block-images',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    const zoomImage = page.getByTestId('zoom-image');
+                    await zoomImage.first().click();
+                    await expect(page.getByTestId('zoom-image-modal')).toBeVisible();
+                },
+                screenshot: { threshold: 0.8 },
+            },
+            {
+                name: 'Inline Images',
+                url: 'blocks/inline-images',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    // Make the text invisible to fix flakiness due to the text position.
+                    await page.evaluate(() => {
+                        for (const p of document.querySelectorAll('p')) {
+                            if (
+                                p.textContent?.includes(
+                                    'This image has intrinsic 400px width, but renders as 300px:'
+                                )
+                            ) {
+                                p.style.color = 'transparent';
+                            }
+                        }
+                    });
+                },
+            },
+            {
+                name: 'Tabs',
+                url: 'blocks/tabs',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Hints',
+                url: 'blocks/hints',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Integration Blocks',
+                url: 'blocks/integrations',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    const mermaidIframe = page
+                        .locator('iframe[title*="mermaid"]')
+                        .first()
+                        .contentFrame();
+                    await expect(mermaidIframe.getByText('Mermaid', { exact: true })).toBeVisible();
+                    await expect(mermaidIframe.getByText('Diagram', { exact: true })).toBeVisible();
+                },
+            },
+            {
+                name: 'Tables',
+                url: 'blocks/tables',
+                run: waitForCookiesDialog,
+                fullPage: true,
+            },
+            {
+                name: 'Expandables',
+                url: 'blocks/expandables',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'API Blocks',
+                url: 'blocks/api-blocks',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Headings',
+                url: 'blocks/headings',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Marks',
+                url: 'blocks/marks',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Emojis',
+                url: 'blocks/emojis',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Icons',
+                url: 'blocks/icons',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Links',
+                url: 'blocks/links',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Buttons',
+                url: 'blocks/buttons',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Lists',
+                url: 'blocks/lists',
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Code',
+                url: 'blocks/code',
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Cards',
+                url: 'blocks/cards',
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Updates',
+                url: 'blocks/updates',
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Math',
+                url: 'blocks/math',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    await page.waitForFunction(() => {
+                        const fonts = Array.from(document.fonts.values());
+                        const mjxFonts = fonts.filter(
+                            (font) => font.family === 'MJXZERO' || font.family === 'MJXTEX'
+                        );
+                        return (
+                            mjxFonts.length === 2 &&
+                            mjxFonts.every((font) => font.status === 'loaded')
+                        );
+                    });
+                },
+            },
+            {
+                name: 'Files',
+                url: 'blocks/files',
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Embeds',
+                url: 'blocks/embeds',
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Page links',
+                url: 'blocks/page-links',
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Annotations',
+                url: 'blocks/annotations',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    await page.waitForSelector('[data-testid="annotation-button"]');
+                    await page.click('[data-testid="annotation-button"]');
+                },
+            },
+            {
+                name: 'Stepper',
+                url: 'blocks/stepper',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Columns',
+                url: 'blocks/columns',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Mermaid',
+                url: 'blocks/mermaid',
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Page options',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'Hidden',
+                url: 'page-options/page-hidden',
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'With cover',
+                url: 'page-options/page-with-cover',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    await waitForCoverImages(page);
+                },
+            },
+            {
+                name: 'With cover for dark mode',
+                url: `page-options/page-with-dark-cover${getCustomizationURL({
+                    themes: {
+                        default: CustomizationDefaultThemeMode.Dark,
+                        toggeable: false,
+                    },
+                })}`,
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    await waitForCoverImages(page, { darkMode: true });
+                },
+            },
+            {
+                name: 'With hero cover',
+                url: 'page-options/page-with-hero-cover',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    await waitForCoverImages(page);
+                },
+            },
+            {
+                name: 'With cover and no TOC',
+                url: 'page-options/page-with-cover-and-no-toc',
+                run: async (page) => {
+                    await waitForCookiesDialog(page);
+                    await waitForCoverImages(page);
+                },
+                screenshot: {
+                    waitForTOCScrolling: false,
+                },
+            },
+            {
+                name: 'With icon',
+                url: 'page-options/page-with-icon',
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Customization',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: allThemeModes.flatMap((themeMode) => [
+            {
+                name: `Without header - Theme mode ${themeMode}`,
+                url: getCustomizationURL({
+                    header: {
+                        preset: CustomizationHeaderPreset.None,
+                        links: [],
+                    },
+                    themes: {
+                        default: themeMode,
+                        toggeable: false,
+                    },
+                }),
+                run: waitForCookiesDialog,
+            },
+            {
+                name: `With duotone icons - Theme mode ${themeMode}`,
+                url: `page-options/page-with-icon${getCustomizationURL({
+                    styling: {
+                        icons: CustomizationIconsStyle.Duotone,
+                    },
+                    themes: {
+                        default: themeMode,
+                        toggeable: false,
+                    },
+                })}`,
+                run: waitForCookiesDialog,
+            },
+            {
+                name: `With header buttons - Theme mode ${themeMode}`,
+                url: getCustomizationURL({
+                    header: {
+                        preset: CustomizationHeaderPreset.Default,
+                        links: headerLinks,
+                    },
+                    themes: {
+                        default: themeMode,
+                        toggeable: false,
+                    },
+                }),
+                run: waitForCookiesDialog,
+            },
+            {
+                name: `Without tint - Default preset - Theme mode ${themeMode}`,
+                url: getCustomizationURL({
+                    header: {
+                        preset: CustomizationHeaderPreset.Default,
+                        links: headerLinks,
+                    },
+                    themes: {
+                        default: themeMode,
+                        toggeable: false,
+                    },
+                }),
+                run: waitForCookiesDialog,
+            },
+            {
+                name: `With custom monospace font - Theme mode ${themeMode}`,
+                url: `blocks/code${getCustomizationURL({
+                    styling: {
+                        monospaceFont: CustomizationDefaultMonospaceFont.SpaceMono,
+                    },
+                })}`,
+                run: waitForCookiesDialog,
+            },
+            // New site themes
+            ...allThemes.flatMap((theme) => [
+                ...allTintColors.flatMap((tint) => [
+                    ...allSidebarBackgroundStyles.flatMap((sidebarStyle) => ({
+                        name: `Theme ${theme} - Tint ${tint.label} - Sidebar ${sidebarStyle} - Mode ${themeMode}`,
+                        url: getCustomizationURL({
+                            styling: {
+                                theme,
+                                ...(tint.value ? { tint: { color: tint.value } } : {}),
+                                sidebar: {
+                                    background: sidebarStyle,
+                                    list: CustomizationSidebarListStyle.Default,
+                                },
+                            },
+                            header: {
+                                links: headerLinks,
+                            },
+                            themes: {
+                                default: themeMode,
+                                toggeable: false,
+                            },
+                        }),
+                        run: waitForCookiesDialog,
+                    })),
+                ]),
+                ...allSearchStyles.flatMap((searchStyle) => ({
+                    name: `Theme ${theme} – Search ${searchStyle} – Mode ${themeMode}`,
+                    url: getCustomizationURL({
+                        styling: {
+                            theme,
+                            search: searchStyle,
+                        },
+                        header: {
+                            links: headerLinks,
+                        },
+                        themes: {
+                            default: themeMode,
+                            toggeable: false,
+                        },
+                    }),
+                    run: waitForCookiesDialog,
+                })),
+            ]),
+            // Deprecated header themes
+            ...allDeprecatedThemePresets.flatMap((preset) => [
+                ...allSidebarBackgroundStyles.flatMap((sidebarStyle) => ({
+                    name: `With tint - Legacy header preset ${preset} - Sidebar ${sidebarStyle} - Theme mode ${themeMode}`,
+                    url: getCustomizationURL({
+                        styling: {
+                            tint: { color: { light: '#346DDB', dark: '#346DDB' } },
+                            sidebar: {
+                                background: sidebarStyle,
+                                list: CustomizationSidebarListStyle.Default,
+                            },
+                        },
+                        header: {
+                            preset,
+                            ...(preset === CustomizationHeaderPreset.Custom
+                                ? {
+                                      backgroundColor: { light: '#C62C68', dark: '#EF96B8' },
+                                      linkColor: { light: '#4DDE98', dark: '#0C693D' },
+                                  }
+                                : {}),
+                            links: headerLinks,
+                        },
+                        themes: {
+                            default: themeMode,
+                            toggeable: false,
+                        },
+                    }),
+                    run: waitForCookiesDialog,
+                })),
+            ]),
+            {
+                name: `With tint - Legacy background match - Theme mode ${themeMode}`,
+                url: getCustomizationURL({
+                    styling: {
+                        background: CustomizationBackground.Match,
+                    },
+                    header: {
+                        preset: CustomizationHeaderPreset.Default,
+                        links: headerLinks,
+                    },
+                    themes: {
+                        default: themeMode,
+                        toggeable: false,
+                    },
+                }),
+                run: waitForCookiesDialog,
+            },
+            {
+                name: `With flat and circular corners - Theme mode ${themeMode}`,
+                url: getCustomizationURL({
+                    styling: {
+                        depth: CustomizationDepth.Flat,
+                        corners: CustomizationCorners.Circular,
+                    },
+                }),
+                run: waitForCookiesDialog,
+            },
+        ]),
+    },
+    {
+        name: 'Reusable contents',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/reusable-contents/',
+        tests: [
+            {
+                name: 'All cases',
+                url: '',
+            },
+        ],
+    },
+    {
+        name: 'Page actions',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'Without page actions',
+                url: getCustomizationURL({
+                    pageActions: {
+                        markdown: false,
+                        externalAI: false,
+                    },
+                }),
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Social links',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'With social links',
+                url: getCustomizationURL({
+                    socialAccounts: [
+                        {
+                            platform: SiteSocialAccountPlatform.Github,
+                            display: { footer: true },
+                            handle: 'GitbookIO',
+                        },
+                        {
+                            platform: SiteSocialAccountPlatform.Linkedin,
+                            display: { footer: true },
+                            handle: 'gitbook',
+                        },
+                        {
+                            platform: SiteSocialAccountPlatform.Twitter,
+                            display: { footer: false },
+                            handle: 'GitBookIO',
+                        },
+                    ],
+                }),
+                fullPage: true,
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Ads',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'Without previewed ads',
+                url: 'text-page?ads_preview=1',
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Shared space navigation (first site)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/shared-space-uno/',
+        tests: [
+            {
+                name: 'Navigation to shared space',
+                url: '',
+                run: async (page) => {
+                    const sharedSpaceLink = page.locator('a.underline');
+                    await sharedSpaceLink.click();
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'shared' })
+                    ).toBeVisible();
+                    const url = page.url();
+                    expect(url.includes('shared-space-uno')).toBeTruthy(); // same uno site
+                    expect(url.endsWith('/shared')).toBeTruthy(); // correct page
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Shared space navigation (second site)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/shared-space-dos/',
+        tests: [
+            {
+                name: 'Navigation to shared space',
+                url: '',
+                run: async (page) => {
+                    await page.locator('a.underline').click();
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'shared' })
+                    ).toBeVisible();
+                    const url = page.url();
+                    expect(url.includes('shared-space-dos')).toBeTruthy(); // same dos site
+                    expect(url.endsWith('/shared')).toBeTruthy(); // correct page
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Site Redirects',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/gitbook-doc/',
+        tests: [
+            {
+                name: 'Basic redirect',
+                url: 'a/redirect/to/sso',
+                run: async (page) => {
+                    await expect(page.locator('h1')).toHaveText('SSO');
+                },
+                screenshot: false,
+            },
+            {
+                name: 'Complex wildcard with special characters',
+                url: 'foo/bar/baz/123456789-welcome-to-gitbook-%22%20target=%22_blank',
+                run: async (page) => {
+                    await expect(page.locator('h1')).toHaveText('SEO');
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Content Redirects',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/gitbook-doc/',
+        tests: [
+            {
+                name: 'Redirect to new location',
+                url: '/content-editor/editing-content/inline/redirect-test',
+                run: async (page) => {
+                    await expect(page.locator('h1')).toHaveText('Redirect test');
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Site Redirects with sections',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/sections/',
+        tests: [
+            {
+                // This test that a redirect that incudes a section path works
+                name: 'Redirect to Quickstart page',
+                url: 'sections-2/redirect-test',
+                run: async (page) => {
+                    await expect(page.locator('h1')).toContainText('Quickstart');
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Share links',
+        contentBaseURL: 'https://gitbook.gitbook.io/gbo-tests-share-links/',
+        tests: [
+            {
+                name: 'Valid link',
+                url: 'thDznyWXCeEoT55WB7HC/',
+            },
+            {
+                name: 'Invalid link',
+                url: 'invalid/',
+                run: async (page) => {
+                    await expect(
+                        page.getByText('Authentication missing to access this content')
+                    ).toBeVisible();
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Navigation of links on a share links site',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/api-multi-versions-share-links/',
+        tests: [
+            {
+                name: 'Link in same site has the share link token preserved',
+                url: '8tNo6MeXg7CkFMzSSz81/link-in-same-site',
+                run: async (page) => {
+                    const linkToDifferentPage = page.getByRole('link', { name: 'Other Page' });
+                    await linkToDifferentPage.click();
+                    await page.waitForURL((url) =>
+                        url.pathname.includes(
+                            '/api-multi-versions-share-links/8tNo6MeXg7CkFMzSSz81/3.0/other-page'
+                        )
+                    );
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'Other Page' })
+                    ).toBeVisible();
+                },
+                screenshot: false,
+            },
+            {
+                name: 'Link to different site should not have the share link token preserved',
+                url: '8tNo6MeXg7CkFMzSSz81/link-in-different-site',
+                run: async (page) => {
+                    const linkToDifferentSite = page.getByRole('link', { name: 'Basics' });
+                    await linkToDifferentSite.click();
+                    await page.waitForURL(
+                        (url) =>
+                            url.toString() ===
+                            'https://gitbook-open-e2e-sites.gitbook.io/sections/sections-4/basics/editor'
+                    );
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'Editor' })
+                    ).toBeVisible();
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Visitor Auth - Space',
+        contentBaseURL: 'https://gitbook.gitbook.io/gbo-va-space/',
+        tests: [
+            {
+                name: 'First',
+                url: () => {
+                    const privateKey = '70b844d0-c519-4532-8586-5970ce48c537';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `first?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'first' })
+                    ).toBeVisible();
+                },
+                screenshot: false,
+            },
+            {
+                name: 'Second',
+                url: () => {
+                    const privateKey = '70b844d0-c519-4532-8586-5970ce48c537';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `second?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'second' })
+                    ).toBeVisible();
+                },
+                screenshot: false,
+            },
+        ],
+    },
+    {
+        name: 'Visitor Auth - Collection',
+        contentBaseURL: 'https://gitbook.gitbook.io/gbo-va-collection/',
+        tests: [
+            {
+                name: 'Root',
+                url: () => {
+                    const privateKey = 'af5688dc-f0b6-4146-9b1d-6d834c62c980';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `?jwt_token=${token}`;
+                },
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Primary (Space A)',
+                url: () => {
+                    const privateKey = 'af5688dc-f0b6-4146-9b1d-6d834c62c980';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+
+                    // Test that when accessing the non-canonical URL, we are redirected to the canonical URL
+                    // with the jwt token in the query string
+                    return `spacea?jwt_token=${token}`;
+                },
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Space B',
+                url: () => {
+                    const privateKey = 'af5688dc-f0b6-4146-9b1d-6d834c62c980';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `spaceb?jwt_token=${token}`;
+                },
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Space C',
+                url: () => {
+                    const privateKey = 'af5688dc-f0b6-4146-9b1d-6d834c62c980';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `spacec?jwt_token=${token}`;
+                },
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Visitor Auth - Space (custom domain)',
+        contentBaseURL: 'https://test.gitbook.community/',
+        tests: [
+            {
+                name: 'Root',
+                url: () => {
+                    const privateKey = '19c8166f-c436-4ed1-a24e-60954b804021';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `?jwt_token=${token}`;
+                },
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'First',
+                url: () => {
+                    const privateKey = '19c8166f-c436-4ed1-a24e-60954b804021';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `first?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    await expect(
+                        page.getByRole('heading', { level: 1, name: 'first' })
+                    ).toBeVisible();
+                },
+                screenshot: false,
+            },
+            {
+                name: 'Custom page',
+                url: () => {
+                    const privateKey = '19c8166f-c436-4ed1-a24e-60954b804021';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `custom-page?jwt_token=${token}`;
+                },
+                run: waitForCookiesDialog,
+            },
+            {
+                name: 'Inner page',
+                url: () => {
+                    const privateKey = '19c8166f-c436-4ed1-a24e-60954b804021';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `custom-page/inner-page?jwt_token=${token}`;
+                },
+                run: waitForCookiesDialog,
+            },
+        ],
+    },
+    {
+        name: 'Visitor Auth - Site (redirects to fallback/auth URL)',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/va-site-redirects-fallback/',
+        tests: [
+            // This test does not work on Playwright
+            // Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+            // @see https://github.com/microsoft/playwright/issues/34889
+            // {
+            //     name: 'Redirect to fallback on invalid token pulled from cookie',
+            //     url: '',
+            //     screenshot: false,
+            //     cookies: (() => {
+            //         const basePath = '/va-site-redirects-fallback/';
+            //         const invalidToken = jwt.sign(
+            //             {
+            //                 name: 'gitbook-open-tests',
+            //             },
+            //             'invalidKey',
+            //             {
+            //                 expiresIn: '24h',
+            //             }
+            //         );
+            //         return [
+            //             {
+            //                 name: getVisitorAuthCookieName(basePath),
+            //                 value: getVisitorAuthCookieValue(basePath, invalidToken),
+            //                 httpOnly: true,
+            //             },
+            //         ];
+            //     })(),
+            //     run: async (page) => {
+            //         await expect(page).toHaveURL(/https:\/\/www.google.com/);
+            //     },
+            // },
+            {
+                name: 'Show error message when invalid token is passed to url',
+                screenshot: false,
+                url: () => {
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                        },
+                        'invalidKey',
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    await expect(page.locator('pre')).toContainText(
+                        'Error while validating the JWT token. Reason: The token signature is invalid.'
+                    );
+                },
+            },
+        ],
+    },
+    {
+        name: 'Languages',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: allLocales.map((locale) => ({
+            name: locale,
+            url: getCustomizationURL({
+                internationalization: {
+                    locale,
+                },
+            }),
+            run: waitForCookiesDialog,
+        })),
+    },
+    {
+        name: 'SEO',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'Index by default',
+                url: '?x-gitbook-search-indexation=true',
+                screenshot: false,
+                run: async (page) => {
+                    const metaRobots = page.locator('meta[name="robots"]');
+                    await expect(metaRobots).toHaveAttribute('content', 'index, follow');
+                },
+            },
+            {
+                name: `Don't index noIndex`,
+                url: 'page-options/page-no-index?x-gitbook-search-indexation=true',
+                screenshot: false,
+                run: async (page) => {
+                    const metaRobots = page.locator('meta[name="robots"]');
+                    await expect(metaRobots).toHaveAttribute('content', 'noindex, nofollow');
+                },
+            },
+            {
+                name: `Don't index descendant of noIndex`,
+                url: 'page-options/page-no-index/descendant-of-page-no-index?x-gitbook-search-indexation=true',
+                screenshot: false,
+                run: async (page) => {
+                    const metaRobots = page.locator('meta[name="robots"]');
+                    await expect(metaRobots).toHaveAttribute('content', 'noindex, nofollow');
+                },
+            },
+            {
+                name: `Don't index noRobotsIndex`,
+                url: 'page-options/page-no-robots-index?x-gitbook-search-indexation=true',
+                screenshot: false,
+                run: async (page) => {
+                    const metaRobots = page.locator('meta[name="robots"]');
+                    await expect(metaRobots).toHaveAttribute('content', 'noindex, nofollow');
+                },
+            },
+            {
+                name: `Don't index descendant of noRobotsIndex`,
+                url: 'page-options/page-no-robots-index/descendant-of-page-no-robots-index?x-gitbook-search-indexation=true',
+                screenshot: false,
+                run: async (page) => {
+                    const metaRobots = page.locator('meta[name="robots"]');
+                    await expect(metaRobots).toHaveAttribute('content', 'noindex, nofollow');
+                },
+            },
+        ],
+    },
+    {
+        name: 'Adaptive Content - VA',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/adaptive-content-va/',
+        tests: [
+            {
+                name: 'isAlphaUser',
+                url: () => {
+                    const privateKey = 'afe09cdf-0f43-480a-b54c-8b1f62f174f9';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                            isAlphaUser: true,
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    const alphaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Alpha users' });
+                    const betaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Beta users' });
+                    await expect(alphaUserPage).toBeVisible();
+                    await expect(betaUserPage).toHaveCount(0);
+                },
+            },
+            {
+                name: 'isBetaUser',
+                url: () => {
+                    const privateKey = 'afe09cdf-0f43-480a-b54c-8b1f62f174f9';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                            isBetaUser: true,
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    const alphaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Alpha users' });
+                    const betaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Beta users' });
+                    await expect(betaUserPage).toBeVisible();
+                    await expect(alphaUserPage).toHaveCount(0);
+                },
+            },
+            {
+                name: 'isAlphaUser & isBetaUser',
+                url: () => {
+                    const privateKey = 'afe09cdf-0f43-480a-b54c-8b1f62f174f9';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                            isAlphaUser: true,
+                            isBetaUser: true,
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return `?jwt_token=${token}`;
+                },
+                run: async (page) => {
+                    const alphaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Alpha users' });
+                    const betaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Beta users' });
+                    await expect(alphaUserPage).toBeVisible();
+                    await expect(betaUserPage).toBeVisible();
+                },
+            },
+        ],
+    },
+    {
+        name: 'Adaptive Content - Public',
+        contentBaseURL: 'https://gitbook-open-e2e-sites.gitbook.io/adaptive-content-public/',
+        tests: [
+            {
+                name: 'No custom cookie',
+                url: '',
+                run: async (page) => {
+                    const welcomePage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Welcome Page' });
+                    const alphaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Alpha User' });
+                    const betaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Beta User' });
+
+                    await expect(welcomePage).toBeVisible();
+                    await expect(alphaUserPage).toHaveCount(0);
+                    await expect(betaUserPage).toHaveCount(0);
+                },
+            },
+            {
+                name: 'Custom cookie with isAlphaUser claim',
+                cookies: (() => {
+                    const privateKey = '4ddd3c2f-e4b7-4e73-840b-526c3be19746';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                            isAlphaUser: true,
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return [
+                        {
+                            name: VISITOR_TOKEN_COOKIE,
+                            value: token,
+                            httpOnly: true,
+                        },
+                    ];
+                })(),
+                url: '',
+                run: async (page) => {
+                    const welcomePage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Welcome Page' });
+                    const alphaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Alpha User' });
+                    const betaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Beta User' });
+
+                    await expect(welcomePage).toBeVisible();
+                    await expect(alphaUserPage).toBeVisible();
+                    await expect(betaUserPage).toHaveCount(0);
+                },
+            },
+            {
+                name: 'Custom cookie with isBetaUser claim',
+                cookies: (() => {
+                    const privateKey = '4ddd3c2f-e4b7-4e73-840b-526c3be19746';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                            isBetaUser: true,
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return [
+                        {
+                            name: VISITOR_TOKEN_COOKIE,
+                            value: token,
+                            httpOnly: true,
+                        },
+                    ];
+                })(),
+                url: '',
+                run: async (page) => {
+                    const welcomePage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Welcome Page' });
+                    const alphaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Alpha User' });
+                    const betaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Beta User' });
+
+                    await expect(welcomePage).toBeVisible();
+                    await expect(betaUserPage).toBeVisible();
+                    await expect(alphaUserPage).toHaveCount(0);
+                },
+            },
+            {
+                name: 'Custom cookie with isAlphaUser & isBetaUser claims',
+                cookies: (() => {
+                    const privateKey = '4ddd3c2f-e4b7-4e73-840b-526c3be19746';
+                    const token = jwt.sign(
+                        {
+                            name: 'gitbook-open-tests',
+                            isAlphaUser: true,
+                            isBetaUser: true,
+                        },
+                        privateKey,
+                        {
+                            expiresIn: '24h',
+                        }
+                    );
+                    return [
+                        {
+                            name: VISITOR_TOKEN_COOKIE,
+                            value: token,
+                            httpOnly: true,
+                        },
+                    ];
+                })(),
+                url: '',
+                run: async (page) => {
+                    const welcomePage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Welcome Page' });
+                    const alphaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Alpha User' });
+                    const betaUserPage = page
+                        .locator('a[class*="group\\/toclink"]')
+                        .filter({ hasText: 'Beta User' });
+
+                    await expect(welcomePage).toBeVisible();
+                    await expect(betaUserPage).toBeVisible();
+                    await expect(alphaUserPage).toBeVisible();
+                },
+            },
+        ],
+    },
+    {
+        name: 'Tables',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/',
+        tests: [
+            {
+                name: 'Default table',
+                url: 'blocks/tables',
+                run: waitForCookiesDialog,
+                fullPage: true,
+            },
+            {
+                name: 'Table with straight corners',
+                url: `blocks/tables${getCustomizationURL({
+                    styling: {
+                        corners: CustomizationCorners.Straight,
+                    },
+                })}`,
+                run: waitForCookiesDialog,
+                fullPage: true,
+            },
+            {
+                name: 'Table with primary color',
+                url: `blocks/tables${getCustomizationURL({
+                    styling: {
+                        tint: { color: { light: '#346DDB', dark: '#346DDB' } },
+                    },
+                })}`,
+                run: waitForCookiesDialog,
+                fullPage: true,
+            },
+            // Test dark mode for each variant
+            ...allThemeModes.flatMap((theme) => [
+                {
+                    name: `Table in ${theme} mode`,
+                    url: `blocks/tables${getCustomizationURL({
+                        themes: {
+                            default: theme,
+                            toggeable: false,
+                        },
+                    })}`,
+                    run: waitForCookiesDialog,
+                    fullPage: true,
+                },
+                {
+                    name: `Table with straight corners in ${theme} mode`,
+                    url: `blocks/tables${getCustomizationURL({
+                        styling: {
+                            corners: CustomizationCorners.Straight,
+                        },
+                        themes: {
+                            default: theme,
+                            toggeable: false,
+                        },
+                    })}`,
+                    run: waitForCookiesDialog,
+                    fullPage: true,
+                },
+                {
+                    name: `Table with primary color in ${theme} mode`,
+                    url: `blocks/tables${getCustomizationURL({
+                        styling: {
+                            tint: { color: { light: '#346DDB', dark: '#346DDB' } },
+                        },
+                        themes: {
+                            default: theme,
+                            toggeable: false,
+                        },
+                    })}`,
+                    run: waitForCookiesDialog,
+                    fullPage: true,
+                },
+            ]),
+        ],
+    },
+    {
+        name: 'Docs Embed - Basic',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/~gitbook/embed/demo/',
+        tests: [
+            {
+                name: 'Standalone UX',
+                url: '',
+                run: async (page) => {
+                    const button = page.locator('#gitbook-widget-button');
+                    await expect(button).toBeVisible();
+                    await expect(button.locator('#gitbook-widget-button-label')).toHaveText('Ask');
+                    await expect(button.locator('#gitbook-widget-button-icon')).toHaveAttribute(
+                        'data-icon',
+                        'assistant'
+                    );
+
+                    await expect(page.locator('#gitbook-widget-window')).toBeVisible();
+                    await button.click(); // Toggle the window off for the screenshot
+                    await expect(page.locator('#gitbook-widget-window')).not.toBeVisible();
+                },
+            },
+            {
+                name: 'Change standalone button label and icon',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate(() => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('configure', {
+                            button: {
+                                label: 'Docs',
+                                icon: 'book',
+                            },
+                        });
+                    });
+                    const button = page.locator('#gitbook-widget-button');
+                    await expect(button).toBeVisible();
+                    button.click();
+                    await expect(page.locator('#gitbook-widget-window')).not.toBeVisible();
+                    await expect(page.locator('#gitbook-widget-button-label')).toHaveText('Docs');
+                    await expect(page.locator('#gitbook-widget-button-icon')).toHaveAttribute(
+                        'data-icon',
+                        'book'
+                    );
+                },
+            },
+        ],
+    },
+    {
+        name: 'Docs Embed - Assistant + Docs',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/~gitbook/embed/demo/',
+        skip: process.env.ARGOS_BUILD_NAME !== 'v2-vercel',
+        tests: [
+            {
+                name: 'Switch between tabs',
+                url: '',
+                run: async (page) => {
+                    await setTimeToMorning(page);
+                    await page.reload();
+                    await expect(page.locator('#gitbook-widget-window')).toBeVisible();
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await iframe.getByTestId('embed-tab-docs').click(); // Switch to docs tab
+                    await expect(iframe.getByTestId('embed-docs-page')).toBeVisible({
+                        timeout: 20000,
+                    });
+
+                    await iframe.getByTestId('embed-tab-assistant').click(); // Switch to assistant tab
+                    await expect(iframe.getByTestId('ai-chat')).toBeVisible();
+
+                    await iframe.owner().evaluate(overrideAIInitialState);
+                },
+            },
+            {
+                name: 'API - navigateToPage',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate(() => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('navigateToPage', '/text-page');
+                    });
+                    await expect(page.locator('#gitbook-widget-window')).toBeVisible();
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(iframe.getByTestId('embed-docs-page')).toBeVisible({
+                        timeout: 20000,
+                    });
+                    await expect(iframe.owner()).toHaveAttribute(
+                        'src',
+                        expect.stringContaining('text-page')
+                    );
+                },
+            },
+            {
+                name: 'API - postUserMessage',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate((aiPrompt) => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('postUserMessage', aiPrompt);
+                    }, AI_PROMPT);
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(iframe.getByTestId('ai-chat')).toBeVisible();
+                    await expect(iframe.getByTestId('ai-chat-message-user').first()).toHaveText(
+                        AI_PROMPT
+                    );
+                    await iframe.owner().evaluate(overrideAIResponse);
+                },
+            },
+            {
+                name: 'Configuration - Suggested questions',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate(() => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('configure', {
+                            suggestions: [
+                                'What is GitBook?',
+                                'How do I get started?',
+                                'What can you do?',
+                            ],
+                        });
+                    });
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(
+                        iframe.getByTestId('ai-chat-suggested-question').nth(0)
+                    ).toHaveText('What is GitBook?');
+                    await expect(
+                        iframe.getByTestId('ai-chat-suggested-question').nth(1)
+                    ).toHaveText('How do I get started?');
+                    await expect(
+                        iframe.getByTestId('ai-chat-suggested-question').nth(2)
+                    ).toHaveText('What can you do?');
+                    await iframe.owner().evaluate(overrideAIInitialState);
+                },
+            },
+            {
+                name: 'Configuration - Custom action buttons',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate((aiPrompt) => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('configure', {
+                            actions: [
+                                {
+                                    label: 'Open internal link',
+                                    icon: 'bolt',
+                                    onClick: () => {
+                                        const GitBook =
+                                            window.GitBook as unknown as GitBookStandalone;
+                                        GitBook('navigateToPage', '/text-page');
+                                    },
+                                },
+                                {
+                                    label: 'Open external link',
+                                    icon: 'sparkle',
+                                    onClick: () => {
+                                        window.open('https://gitbook.com', '_blank');
+                                    },
+                                },
+                                {
+                                    label: 'Post message',
+                                    icon: 'message',
+                                    onClick: () => {
+                                        const GitBook =
+                                            window.GitBook as unknown as GitBookStandalone;
+                                        GitBook('postUserMessage', aiPrompt);
+                                        GitBook('navigateToAssistant');
+                                    },
+                                },
+                                {
+                                    label: 'Close',
+                                    icon: 'xmark',
+                                    onClick: () => {
+                                        const GitBook =
+                                            window.GitBook as unknown as GitBookStandalone;
+                                        GitBook('close');
+                                    },
+                                },
+                            ],
+                        });
+                    }, AI_PROMPT);
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(iframe.getByTestId('embed-action')).toHaveCount(4);
+                    const actions = iframe.getByTestId('embed-action');
+
+                    await expect(actions.nth(0)).toHaveAccessibleName('Open internal link');
+                    await actions.nth(0).click();
+                    await expect(iframe.getByTestId('embed-docs-page')).toBeVisible();
+                    await expect(iframe.owner()).toHaveAttribute(
+                        'src',
+                        expect.stringContaining('text-page')
+                    );
+
+                    await expect(actions.nth(1)).toHaveAccessibleName('Open external link');
+                    // Intercept the new page event without navigating
+                    const [newPage] = await Promise.all([
+                        page.context().waitForEvent('page', { timeout: 5000 }),
+                        actions.nth(1).click(),
+                    ]);
+                    // Verify the new page would have opened with the expected URL
+                    expect(newPage.url()).toContain('gitbook.com');
+                    // Close it immediately to avoid navigation
+                    await newPage.close();
+
+                    await expect(actions.nth(2)).toHaveAccessibleName('Post message');
+                    await actions.nth(2).click();
+                    await expect(iframe.getByTestId('ai-chat')).toBeVisible();
+                    await expect(iframe.getByTestId('ai-chat-message-user').first()).toHaveText(
+                        AI_PROMPT
+                    );
+
+                    await expect(actions.nth(3)).toHaveAccessibleName('Close');
+                    await actions.nth(3).click();
+                    await expect(page.locator('#gitbook-widget-window')).not.toBeVisible();
+                    await page.locator('#gitbook-widget-button').click();
+                    await iframe.owner().evaluate(overrideAIResponse);
+                },
+            },
+            {
+                name: 'Configuration - Custom tools',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate(() => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('configure', {
+                            tools: [
+                                {
+                                    name: 'contact_support',
+                                    description: 'Contact support on behalf of the user',
+                                    execute: async () => {
+                                        return {
+                                            output: { message: 'Support message' },
+                                            summary: {
+                                                text: 'Contacted support',
+                                                icon: 'circle-question',
+                                            },
+                                        };
+                                    },
+                                    confirmation: {
+                                        icon: 'circle-question',
+                                        label: 'Contact support',
+                                    },
+                                },
+                            ],
+                        });
+                        GitBook(
+                            'postUserMessage',
+                            'I want to contact support. Call the tool directly without a preamble. Do not respond with anything else.'
+                        );
+                    });
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(iframe.getByTestId('ai-chat-message-user').first()).toHaveText(
+                        'I want to contact support. Call the tool directly without a preamble. Do not respond with anything else.'
+                    );
+                    const toolConfirmation = iframe
+                        .getByTestId('ai-chat-tool-confirm-accept')
+                        .first();
+                    await expect(toolConfirmation).toBeVisible({
+                        timeout: 30000,
+                    });
+                    await iframe.owner().evaluate(overrideAIResponse);
+                },
+            },
+        ],
+    },
+    {
+        name: 'Docs Embed - Docs Only',
+        contentBaseURL: 'https://gitbook.gitbook.io/test-gitbook-open/~gitbook/embed/demo/',
+        skip: process.env.ARGOS_BUILD_NAME !== 'v2-vercel',
+        tests: [
+            {
+                name: 'Docs only',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate(() => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('configure', {
+                            tabs: ['docs'],
+                        });
+                    });
+                    await expect(page.locator('#gitbook-widget-window')).toBeVisible();
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(iframe.getByTestId('embed-docs-page')).toBeVisible({
+                        timeout: 20000,
+                    });
+                },
+            },
+            {
+                name: 'Table of contents',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate(() => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('configure', {
+                            tabs: ['docs'],
+                        });
+                    });
+                    await expect(page.locator('#gitbook-widget-window')).toBeVisible();
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(iframe.getByTestId('embed-docs-page')).toBeVisible({
+                        timeout: 20000,
+                    });
+                    const tocButton = iframe.getByTestId('toc-button');
+                    await expect(tocButton).toBeVisible();
+                    await tocButton.click();
+                    await expect(iframe.getByTestId('table-of-contents')).toBeVisible();
+                },
+            },
+            {
+                name: 'Open in new tab',
+                url: '',
+                run: async (page) => {
+                    await page.evaluate(() => {
+                        const GitBook = window.GitBook as unknown as GitBookStandalone;
+                        GitBook('configure', {
+                            tabs: ['docs'],
+                        });
+                    });
+                    await expect(page.locator('#gitbook-widget-window')).toBeVisible();
+                    const iframe = page.frameLocator('#gitbook-widget-iframe');
+                    await expect(iframe.getByTestId('embed-docs-page')).toBeVisible({
+                        timeout: 20000,
+                    });
+                    const openInNewTabButton = iframe.getByTestId(
+                        'embed-docs-page-open-in-new-tab'
+                    );
+                    await expect(openInNewTabButton).toBeVisible();
+                    // Intercept the new page event without navigating
+                    const [newPage] = await Promise.all([
+                        page.context().waitForEvent('page', { timeout: 5000 }),
+                        openInNewTabButton.click(),
+                    ]);
+                    // Verify the new page would have opened with the expected URL
+                    expect(newPage.url()).toContain('gitbook.gitbook.io');
+                    // Close it immediately to avoid navigation
+                    await newPage.close();
+                },
+            },
+        ],
+    },
+];
+
+runTestCases(testCases);
