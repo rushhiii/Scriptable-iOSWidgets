@@ -1,31 +1,18 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
-node_modules
-/.pnp
-.pnp.js
+node_modules/
 
-# misc
-.DS_Store
-*.pem
+# next
+.next/
+out/
 
-# debug
+# local env
+.env*.local
+
+# logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Turbo
-.turbo
-
-# Vercel
-.vercel
-
-# Env files
-.env.local
-
-# TypeScript
-*.tsbuildinfo
-.npmrc
-
-# Bun pack artifacts
-packages/*/*.tgz
+# system
+.DS_Store
+Thumbs.db
