@@ -189,69 +189,61 @@ export default async function DocsPage({
   };
 
   return (
-    <div className="page-shell pb-16">
-      <DocsTopbar />
+    <div className="docs-shell mx-auto w-full max-w-docs gap-4 px-4 py-5 md:gap-6 md:px-8 lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,290px)]">
+      <div className="fade-in-up lg:col-span-1">
+        <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
+      </div>
 
-      <div className="mx-auto mt-5 grid w-full max-w-docs grid-cols-12 gap-4 px-4 md:gap-6 md:px-8">
-        <div className="col-span-12 lg:col-span-3 fade-in-up">
-          <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
-        </div>
+      <main className="fade-in-up fade-delay-1 lg:col-span-1">
+        <article className="content-panel">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand/85">{doc.section}</p>
 
-        <main className="col-span-12 lg:col-span-6 xl:col-span-6 fade-in-up fade-delay-1">
-          <article className="surface-card p-6 md:p-8 lg:p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand/85">
-              {doc.section}
-            </p>
+          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink md:text-5xl">
+            {doc.title}
+          </h1>
 
-            <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink md:text-5xl">
-              {doc.title}
-            </h1>
+          {doc.description ? (
+            <p className="mt-3 max-w-2xl text-base text-muted md:text-lg">{doc.description}</p>
+          ) : null}
 
-            {doc.description ? (
-              <p className="mt-3 max-w-2xl text-base text-muted md:text-lg">{doc.description}</p>
+          {doc.updated ? (
+            <p className="mt-5 text-xs uppercase tracking-[0.14em] text-muted/80">Updated {doc.updated}</p>
+          ) : null}
+
+          <div className="prose prose-lg mt-10 max-w-none prose-headings:font-display prose-headings:text-ink prose-p:text-ink/90 prose-strong:text-ink prose-li:text-ink/85 prose-code:text-brand">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {doc.body}
+            </ReactMarkdown>
+          </div>
+
+          <div className="mt-12 grid gap-3 border-t border-line/40 pt-6 sm:grid-cols-2">
+            {adjacent.previous ? (
+              <Link
+                href={`/docs/${adjacent.previous.slugPath}`}
+                className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 transition-colors hover:border-brand/60 hover:bg-brand/15"
+              >
+                <p className="text-xs uppercase tracking-[0.16em] text-muted">Previous</p>
+                <p className="mt-1 font-medium text-ink">{adjacent.previous.title}</p>
+              </Link>
+            ) : (
+              <div />
+            )}
+
+            {adjacent.next ? (
+              <Link
+                href={`/docs/${adjacent.next.slugPath}`}
+                className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 text-left transition-colors hover:border-brand/60 hover:bg-brand/15"
+              >
+                <p className="text-xs uppercase tracking-[0.16em] text-muted">Next</p>
+                <p className="mt-1 font-medium text-ink">{adjacent.next.title}</p>
+              </Link>
             ) : null}
+          </div>
+        </article>
+      </main>
 
-            {doc.updated ? (
-              <p className="mt-5 text-xs uppercase tracking-[0.14em] text-muted/80">
-                Updated {doc.updated}
-              </p>
-            ) : null}
-
-            <div className="prose prose-lg mt-10 max-w-none prose-headings:font-display prose-headings:text-ink prose-p:text-ink/90 prose-strong:text-ink prose-li:text-ink/85 prose-code:text-brand">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {doc.body}
-              </ReactMarkdown>
-            </div>
-
-            <div className="mt-12 grid gap-3 border-t border-line/40 pt-6 sm:grid-cols-2">
-              {adjacent.previous ? (
-                <Link
-                  href={`/docs/${adjacent.previous.slugPath}`}
-                  className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 transition-colors hover:border-brand/60 hover:bg-brand/15"
-                >
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted">Previous</p>
-                  <p className="mt-1 font-medium text-ink">{adjacent.previous.title}</p>
-                </Link>
-              ) : (
-                <div />
-              )}
-
-              {adjacent.next ? (
-                <Link
-                  href={`/docs/${adjacent.next.slugPath}`}
-                  className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 text-left transition-colors hover:border-brand/60 hover:bg-brand/15"
-                >
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted">Next</p>
-                  <p className="mt-1 font-medium text-ink">{adjacent.next.title}</p>
-                </Link>
-              ) : null}
-            </div>
-          </article>
-        </main>
-
-        <div className="col-span-12 xl:col-span-3 fade-in-up fade-delay-2">
-          <DocsToc items={doc.toc} />
-        </div>
+      <div className="fade-in-up fade-delay-2 lg:col-span-2 xl:col-span-1">
+        <DocsToc items={doc.toc} />
       </div>
     </div>
   );

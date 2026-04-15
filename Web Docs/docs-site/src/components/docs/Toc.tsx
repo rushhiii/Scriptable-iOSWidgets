@@ -44,7 +44,7 @@ export function DocsToc({ items }: TocProps) {
   }, [items]);
 
   return (
-    <aside className="surface-card sticky top-[96px] hidden max-h-[calc(100vh-7.2rem)] overflow-auto p-4 xl:block">
+    <aside className="toc surface-card sticky top-[110px] max-h-[calc(100vh-8rem)] overflow-auto p-4 xl:block">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">On this page</p>
 
       {items.length === 0 ? (

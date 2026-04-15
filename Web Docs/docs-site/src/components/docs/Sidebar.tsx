@@ -49,16 +49,16 @@ function SidebarList({
 export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   return (
     <>
-      <details className="surface-card mb-4 overflow-hidden lg:hidden">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-ink">
+      <details className="sidebar-mobile surface-card mb-4 overflow-hidden lg:hidden">
+        <summary className="sidebar-mobile-summary cursor-pointer list-none px-4 py-3 text-sm font-medium text-ink">
           Browse docs
         </summary>
-        <div className="border-t border-line/40 px-3 pb-4 pt-3">
+        <div className="sidebar-mobile-body border-t border-line/40 px-3 pb-4 pt-3">
           <SidebarList navigation={navigation} currentSlugPath={currentSlugPath} />
         </div>
       </details>
 
-      <aside className="surface-card sticky top-[96px] hidden max-h-[calc(100vh-7.2rem)] overflow-auto p-4 lg:block xl:p-5">
+      <aside className="sidebar surface-card sticky top-[110px] hidden max-h-[calc(100vh-8rem)] overflow-auto p-4 lg:block xl:p-5">
         <SidebarList navigation={navigation} currentSlugPath={currentSlugPath} />
       </aside>
     </>
