@@ -167,7 +167,7 @@ export function DocsTopbar() {
                     }}
                   >
                     <span>{item.title}</span>
-                    <ChevronDown className="topnav-caret" aria-hidden="true" size={14} />
+                    <ChevronDown className="topnav-caret" aria-hidden="true" size={15} />
                   </button>
 
                   <div className="topnav-dropdown" data-open={isOpen} role="menu" aria-label={`${item.title} menu`}>

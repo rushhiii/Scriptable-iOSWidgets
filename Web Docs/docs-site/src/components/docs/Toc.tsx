@@ -145,7 +145,7 @@ export function DocsToc({ items }: TocProps) {
             className="toc-link"
             data-active={isActive}
             aria-current={isActive ? 'true' : undefined}
-            style={{ paddingLeft: item.depth === 3 ? '.7rem' : undefined }}
+            style={{ paddingLeft: item.depth === 3 ? '1.7rem' : undefined }}
           >
             {item.text}
           </a>
