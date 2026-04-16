@@ -42,6 +42,11 @@ export const metadata: Metadata = {
     template: '%s | Scriptable iOS Widgets',
   },
   description: 'Modern, customizable documentation for a curated collection of Scriptable widgets.',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -141,7 +141,9 @@ export function DocsTopbar() {
       <div className="topbar-inner">
         <div className="topbar-left">
           <Link className="brand" href="/docs/home">
-            <span className="brand-mark" aria-hidden="true" />
+            <span className="brand-mark" aria-hidden="true">
+              <img src="/favicon.ico" alt="" />
+            </span>
             <span>Scriptable iOS Widgets</span>
           </Link>
         </div>

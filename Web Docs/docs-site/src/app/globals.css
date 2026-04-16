@@ -346,8 +346,19 @@ main {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  box-shadow: 0 6px 12px var(--accent-glow);
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  box-shadow: 0 6px 12px color-mix(in srgb, var(--bg) 52%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .topnav {
@@ -911,10 +922,20 @@ main {
   color: var(--text-1);
 }
 
+.docs-footer-logo-image {
+  /* width: 28px; */
+  /* height: 28px; */
+  width: 3rem;
+  height: 3rem;
+  display: block;
+  border-radius: .7rem;
+  object-fit: contain;
+}
+
 .docs-footer-logo-text {
   font-family: var(--font-heading), "Segoe UI", sans-serif;
-  font-size: 2.05rem;
-  font-weight: 700;
+  font-size: 1.7rem;
+  font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1;
 }
@@ -934,7 +955,7 @@ main {
 .docs-footer-column-title {
   font-family: var(--font-heading), "Segoe UI", sans-serif;
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-1);
   margin-bottom: 0.35rem;
 }
@@ -951,7 +972,8 @@ main {
 
 .docs-footer-social {
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 1rem auto;
+
   width: 100%;
   padding: 0.65rem 1rem 1.35rem;
   display: flex;
@@ -961,9 +983,9 @@ main {
 }
 
 .docs-footer-social-link {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
+  width: 1.3rem;
+  height: 1.3rem;
+  /* border-radius: 999px; */
   display: inline-flex;
   align-items: center;
   justify-content: center;

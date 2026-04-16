@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGithub, faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import { Layers } from 'lucide-react';
+import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
+import { faEnvelope, faGlobe } from '@fortawesome/free-solid-svg-icons';
 
 const footerColumns = [
   {
@@ -35,7 +35,7 @@ export function DocsFooter() {
       <div className="docs-footer-inner">
         <div className="docs-footer-logo">
           <span className="docs-footer-logo-icon" aria-hidden="true">
-            <Layers size={28} strokeWidth={1.8} aria-hidden="true" />
+            <img className="docs-footer-logo-image" src="/favicon.ico" alt="" />
           </span>
           <span className="docs-footer-logo-text">Scriptable</span>
         </div>
@@ -76,12 +76,28 @@ export function DocsFooter() {
         </Link>
         <Link
           className="docs-footer-social-link"
-          href="https://x.com"
+          href="https://www.linkedin.com/in/rushhiii"
           target="_blank"
           rel="noreferrer"
-          aria-label="X"
+          aria-label="LinkedIn"
         >
-          <FontAwesomeIcon icon={faXTwitter} size="lg" aria-hidden="true" />
+          <FontAwesomeIcon icon={faLinkedin} size="lg" aria-hidden="true" />
+        </Link>
+        <Link
+          className="docs-footer-social-link"
+          href="https://rushhiii.github.io/Scriptable-IOSWidgets/"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Portfolio"
+        >
+          <FontAwesomeIcon icon={faGlobe} size="lg" aria-hidden="true" />
+        </Link>
+        <Link
+          className="docs-footer-social-link"
+          href="mailto:rushiofficial1205@gmail.com"
+          aria-label="Gmail"
+        >
+          <FontAwesomeIcon icon={faEnvelope} size="lg" aria-hidden="true" />
         </Link>
       </div>
     </footer>
