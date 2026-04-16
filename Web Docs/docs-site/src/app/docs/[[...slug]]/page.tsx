@@ -1,5 +1,6 @@
 import { DocsSidebar } from '@/components/docs/Sidebar';
 import { DocsToc } from '@/components/docs/Toc';
+import { FloatingThemeToggle } from '@/components/docs/FloatingThemeToggle';
 import {
   getAllDocSlugs,
   getDocBySlug,
@@ -233,69 +234,73 @@ export default async function DocsPage({
   };
 
   return (
-    <div className={hasToc ? 'docs-shell' : 'docs-shell docs-shell-no-toc'}>
-      <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
+    <>
+      <div className={hasToc ? 'docs-shell' : 'docs-shell docs-shell-no-toc'}>
+        <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
 
-      <main className="content-panel fade-in">
-        <article>
-          <header className="doc-header">
-            <p className="doc-kicker">{doc.section}</p>
+        <main className="content-panel fade-in">
+          <article>
+            <header className="doc-header">
+              <p className="doc-kicker">{doc.section}</p>
 
-            <div className="doc-title-row">
-              {titleIcon ? (
-                <span className="doc-title-icon">
-                  <DocTitleIcon name={titleIcon} />
-                </span>
-              ) : null}
-              <h1 className="doc-title">{doc.title}</h1>
+              <div className="doc-title-row">
+                {titleIcon ? (
+                  <span className="doc-title-icon">
+                    <DocTitleIcon name={titleIcon} />
+                  </span>
+                ) : null}
+                <h1 className="doc-title">{doc.title}</h1>
+              </div>
+
+              {doc.description ? <p className="doc-summary">{doc.description}</p> : null}
+            </header>
+
+            <div className="doc-content">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={markdownComponents}
+              >
+                {doc.body}
+              </ReactMarkdown>
             </div>
 
-            {doc.description ? <p className="doc-summary">{doc.description}</p> : null}
-          </header>
+            <div className="card-grid" style={{ marginTop: '2.25rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+              {adjacent.previous ? (
+                <Link
+                  href={`/docs/${adjacent.previous.slugPath}`}
+                  className="card"
+                >
+                  <p className="card-meta">Previous</p>
+                  <p className="card-title">{adjacent.previous.title}</p>
+                </Link>
+              ) : (
+                <div />
+              )}
 
-          <div className="doc-content">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={markdownComponents}
-            >
-              {doc.body}
-            </ReactMarkdown>
-          </div>
+              {adjacent.next ? (
+                <Link
+                  href={`/docs/${adjacent.next.slugPath}`}
+                  className="card"
+                >
+                  <p className="card-meta">Next</p>
+                  <p className="card-title">{adjacent.next.title}</p>
+                </Link>
+              ) : null}
+            </div>
 
-          <div className="card-grid" style={{ marginTop: '2.25rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-            {adjacent.previous ? (
-              <Link
-                href={`/docs/${adjacent.previous.slugPath}`}
-                className="card"
-              >
-                <p className="card-meta">Previous</p>
-                <p className="card-title">{adjacent.previous.title}</p>
-              </Link>
-            ) : (
-              <div />
-            )}
-
-            {adjacent.next ? (
-              <Link
-                href={`/docs/${adjacent.next.slugPath}`}
-                className="card"
-              >
-                <p className="card-meta">Next</p>
-                <p className="card-title">{adjacent.next.title}</p>
-              </Link>
+            {doc.updated ? (
+              <p className="doc-kicker" style={{ marginTop: '1.5rem', marginBottom: 0 }}>
+                Updated {doc.updated}
+              </p>
             ) : null}
-          </div>
+          </article>
+        </main>
 
-          {doc.updated ? (
-            <p className="doc-kicker" style={{ marginTop: '1.5rem', marginBottom: 0 }}>
-              Updated {doc.updated}
-            </p>
-          ) : null}
-        </article>
-      </main>
+        {hasToc ? <DocsToc items={doc.toc} /> : null}
+      </div>
 
-      {hasToc ? <DocsToc items={doc.toc} /> : null}
-    </div>
+      <FloatingThemeToggle />
+    </>
   );
 }

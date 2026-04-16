@@ -152,6 +152,22 @@ function stripLegacyLayoutTags(value: string): string {
     .replace(/<br\s*\/?>/gi, '\n');
 }
 
+function normalizeLegacyIndentation(value: string): string {
+  return value
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .map((line) => {
+      if (!line.trim()) {
+        return '';
+      }
+
+      // Legacy MDX often includes JSX indentation that becomes a markdown code block after tags are stripped.
+      return line.replace(/^[ \t]+/, '');
+    })
+    .join('\n');
+}
+
 function renderLegacyHero(attributesRaw: string): string {
   const attributes = parseTagAttributes(attributesRaw);
   const output: string[] = [];
@@ -242,7 +258,7 @@ function normalizeLegacyMdx(content: string): string {
     return `\n${renderLegacyCards(String(cardBlock))}\n`;
   });
 
-  normalized = stripLegacyLayoutTags(normalized)
+  normalized = normalizeLegacyIndentation(stripLegacyLayoutTags(normalized))
     .replace(/<\/?(Card|CardGrid|Callout|Hero)\b[^>]*>/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();

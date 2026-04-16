@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, ChevronDown, Home, List, type LucideIcon } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { SearchCommand } from './SearchCommand';
-import { ThemeToggle } from './ThemeToggle';
 
 type TopNavChild = {
   title: string;
@@ -15,18 +14,14 @@ type TopNavChild = {
 type TopNavItem = {
   title: string;
   href: string;
-  icon?: 'home' | 'book' | 'list';
   children?: TopNavChild[];
 };
 
-type IconName = 'home' | 'book' | 'list' | 'chevron';
-
 const topNav: TopNavItem[] = [
-  { title: 'Home', href: '/docs/home', icon: 'home' },
+  { title: 'Home', href: '/docs/home' },
   {
     title: 'Product',
     href: '/docs/widgets',
-    icon: 'book',
     children: [
       { title: 'Overview', href: '/docs/home' },
       { title: 'Installation', href: '/docs/installation' },
@@ -34,7 +29,7 @@ const topNav: TopNavItem[] = [
       { title: 'Widgets', href: '/docs/widgets' },
     ],
   },
-  { title: 'Changelog', href: '/docs/changelog', icon: 'list' },
+  { title: 'Changelog', href: '/docs/changelog' },
 ];
 
 function normalizePath(path: string): string {
@@ -78,27 +73,6 @@ function isTopItemActive(pathname: string, item: TopNavItem): boolean {
   }
 
   return item.children.some((child) => isActivePath(pathname, child.href));
-}
-
-const iconMap: Record<IconName, LucideIcon> = {
-  home: Home,
-  book: BookOpen,
-  list: List,
-  chevron: ChevronDown,
-};
-
-function Icon({
-  name,
-  size = 16,
-  className,
-}: {
-  name: IconName;
-  size?: number;
-  className?: string;
-}) {
-  const IconComponent = iconMap[name];
-
-  return <IconComponent size={size} className={className} strokeWidth={1.8} aria-hidden="true" />;
 }
 
 export function DocsTopbar() {
@@ -167,11 +141,6 @@ export function DocsTopbar() {
                     data-active={isActive}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    {item.icon ? (
-                      <span className="nav-icon" aria-hidden="true">
-                        <Icon name={item.icon} size={16} />
-                      </span>
-                    ) : null}
                     <span>{item.title}</span>
                   </Link>
                 );
@@ -197,13 +166,8 @@ export function DocsTopbar() {
                       setOpenDropdown((current) => (current === item.href ? null : item.href));
                     }}
                   >
-                    {item.icon ? (
-                      <span className="nav-icon" aria-hidden="true">
-                        <Icon name={item.icon} size={16} />
-                      </span>
-                    ) : null}
                     <span>{item.title}</span>
-                    <Icon name="chevron" size={14} className="topnav-caret" />
+                    <ChevronDown className="topnav-caret" aria-hidden="true" size={14} />
                   </button>
 
                   <div className="topnav-dropdown" data-open={isOpen} role="menu" aria-label={`${item.title} menu`}>
@@ -237,8 +201,6 @@ export function DocsTopbar() {
           >
             Visit Repo
           </a>
-
-          <ThemeToggle />
         </div>
       </div>
     </div>

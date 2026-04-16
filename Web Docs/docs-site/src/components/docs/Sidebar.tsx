@@ -114,6 +114,7 @@ function buildWidgetGroup(section: NavSection): WidgetGroup | null {
 export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   const pathname = usePathname();
   const currentPathname = pathname || toDocHref(currentSlugPath);
+  const sidebarContainerRef = useRef<HTMLElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
@@ -233,6 +234,80 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
     };
   }, [pathname, persistScrollPosition]);
 
+  useEffect(() => {
+    const sidebarElement = sidebarContainerRef.current;
+
+    if (!sidebarElement || typeof window === 'undefined') {
+      return;
+    }
+
+    const GAP_PX = 30;
+    const MIN_SIDEBAR_HEIGHT_PX = 140;
+    let rafId = 0;
+
+    const updateSidebarBounds = () => {
+      rafId = 0;
+
+      const nav = document.querySelector<HTMLElement>('.site-nav');
+      const footer = document.querySelector<HTMLElement>('.docs-footer');
+      const viewportHeight = window.innerHeight;
+
+      const navBottom = Math.max(nav?.getBoundingClientRect().bottom ?? 0, 0);
+      const footerTop = Math.min(footer?.getBoundingClientRect().top ?? viewportHeight, viewportHeight);
+
+      const stickyTop = Math.min(Math.max(navBottom + GAP_PX, GAP_PX), viewportHeight - GAP_PX);
+      const maxHeightByViewport = viewportHeight - stickyTop - GAP_PX;
+      const maxHeightByFooter = footerTop - stickyTop - GAP_PX;
+      const nextMaxHeight = Math.max(MIN_SIDEBAR_HEIGHT_PX, Math.min(maxHeightByViewport, maxHeightByFooter));
+
+      sidebarElement.style.setProperty('--sidebar-sticky-top', `${Math.round(stickyTop)}px`);
+      sidebarElement.style.setProperty('--sidebar-dynamic-max-height', `${Math.round(nextMaxHeight)}px`);
+      syncScrollTopVisibility();
+    };
+
+    const queueUpdate = () => {
+      if (rafId !== 0) {
+        return;
+      }
+
+      rafId = window.requestAnimationFrame(updateSidebarBounds);
+    };
+
+    queueUpdate();
+    window.addEventListener('scroll', queueUpdate, { passive: true });
+    window.addEventListener('resize', queueUpdate);
+
+    let resizeObserver: ResizeObserver | undefined;
+
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(queueUpdate);
+
+      const nav = document.querySelector<HTMLElement>('.site-nav');
+      const footer = document.querySelector<HTMLElement>('.docs-footer');
+
+      if (nav) {
+        resizeObserver.observe(nav);
+      }
+
+      if (footer) {
+        resizeObserver.observe(footer);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('scroll', queueUpdate);
+      window.removeEventListener('resize', queueUpdate);
+
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+
+      if (rafId !== 0) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [syncScrollTopVisibility]);
+
   const handleClickCapture = useCallback((event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as Element | null;
 
@@ -277,7 +352,7 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   }, []);
 
   return (
-    <aside className="sidebar" onClickCapture={handleClickCapture}>
+    <aside ref={sidebarContainerRef} className="sidebar" onClickCapture={handleClickCapture}>
       <button
         type="button"
         className="sidebar-scroll-arrow sidebar-scroll-arrow-top"
