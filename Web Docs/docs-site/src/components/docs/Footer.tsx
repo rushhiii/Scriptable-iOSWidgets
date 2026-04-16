@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGithub, faXTwitter } from '@fortawesome/free-brands-svg-icons';
+import { Layers } from 'lucide-react';
 
 const footerColumns = [
   {
@@ -30,14 +33,11 @@ export function DocsFooter() {
   return (
     <footer className="docs-footer" aria-label="Site footer">
       <div className="docs-footer-inner">
-        <div className="docs-footer-brand">
-          <div className="docs-footer-logo" aria-hidden="true">
-            SI
-          </div>
-          <div>
-            <p className="docs-footer-name">Scriptable iOS Widgets</p>
-            <p className="docs-footer-copy">Docs and widget references for the current release.</p>
-          </div>
+        <div className="docs-footer-logo">
+          <span className="docs-footer-logo-icon" aria-hidden="true">
+            <Layers size={28} strokeWidth={1.8} aria-hidden="true" />
+          </span>
+          <span className="docs-footer-logo-text">Scriptable</span>
         </div>
 
         <div className="docs-footer-columns">
@@ -62,6 +62,27 @@ export function DocsFooter() {
             </section>
           ))}
         </div>
+      </div>
+
+      <div className="docs-footer-social" aria-label="Social links">
+        <Link
+          className="docs-footer-social-link"
+          href="https://github.com/rushhiii/Scriptable-IOSWidgets"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="GitHub"
+        >
+          <FontAwesomeIcon icon={faGithub} size="lg" aria-hidden="true" />
+        </Link>
+        <Link
+          className="docs-footer-social-link"
+          href="https://x.com"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="X"
+        >
+          <FontAwesomeIcon icon={faXTwitter} size="lg" aria-hidden="true" />
+        </Link>
       </div>
     </footer>
   );

@@ -1,68 +1,234 @@
 'use client';
 
-import clsx from 'clsx';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { BookOpen, ChevronDown, Home, List, type LucideIcon } from 'lucide-react';
+import { SearchCommand } from './SearchCommand';
 import { ThemeToggle } from './ThemeToggle';
 
-const topLinks = [
-  { label: 'Home', href: '/docs' },
-  { label: 'Installation', href: '/docs/installation' },
-  { label: 'Widgets', href: '/docs/widgets' },
-  { label: 'Changelog', href: '/docs/changelog' },
+type TopNavChild = {
+  title: string;
+  href: string;
+};
+
+type TopNavItem = {
+  title: string;
+  href: string;
+  icon?: 'home' | 'book' | 'list';
+  children?: TopNavChild[];
+};
+
+type IconName = 'home' | 'book' | 'list' | 'chevron';
+
+const topNav: TopNavItem[] = [
+  { title: 'Home', href: '/docs/home', icon: 'home' },
+  {
+    title: 'Product',
+    href: '/docs/widgets',
+    icon: 'book',
+    children: [
+      { title: 'Overview', href: '/docs/home' },
+      { title: 'Installation', href: '/docs/installation' },
+      { title: 'Usage', href: '/docs/usage' },
+      { title: 'Widgets', href: '/docs/widgets' },
+    ],
+  },
+  { title: 'Changelog', href: '/docs/changelog', icon: 'list' },
 ];
 
-function isActivePath(pathname: string, href: string): boolean {
-  if (href === '/') {
-    return pathname === '/';
+function normalizePath(path: string): string {
+  const noHash = path.split('#')[0];
+  const noQuery = noHash.split('?')[0];
+  const trimmed = noQuery.replace(/\/+$/, '');
+
+  if (!trimmed) {
+    return '/';
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`);
+  if (trimmed === '/docs') {
+    return '/docs/home';
+  }
+
+  return trimmed;
+}
+
+function isActivePath(pathname: string, href: string): boolean {
+  const current = normalizePath(pathname);
+  const target = normalizePath(href);
+
+  if (target === '/docs/home') {
+    return current === '/docs/home';
+  }
+
+  return current === target || current.startsWith(`${target}/`);
+}
+
+function hasChildren(item: TopNavItem): item is TopNavItem & { children: TopNavChild[] } {
+  return Array.isArray(item.children) && item.children.length > 0;
+}
+
+function isTopItemActive(pathname: string, item: TopNavItem): boolean {
+  if (isActivePath(pathname, item.href)) {
+    return true;
+  }
+
+  if (!hasChildren(item)) {
+    return false;
+  }
+
+  return item.children.some((child) => isActivePath(pathname, child.href));
+}
+
+const iconMap: Record<IconName, LucideIcon> = {
+  home: Home,
+  book: BookOpen,
+  list: List,
+  chevron: ChevronDown,
+};
+
+function Icon({
+  name,
+  size = 16,
+  className,
+}: {
+  name: IconName;
+  size?: number;
+  className?: string;
+}) {
+  const IconComponent = iconMap[name];
+
+  return <IconComponent size={size} className={className} strokeWidth={1.8} aria-hidden="true" />;
 }
 
 export function DocsTopbar() {
   const pathname = usePathname();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setOpenDropdown(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    function onPointerDown(event: PointerEvent) {
+      if (!navRef.current) {
+        return;
+      }
+
+      if (!navRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpenDropdown(null);
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
   return (
     <div className="topbar">
       <div className="topbar-inner">
-        <Link href="/docs" className="topbar-brand">
-          <span className="topbar-brand-mark" aria-hidden="true">
-            S
-          </span>
-          <span className="topbar-brand-text">Scriptable iOS Widgets</span>
-        </Link>
-
-        <div className="topbar-search" role="search" aria-label="Search docs">
-          <span className="topbar-search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-          </span>
-          <span className="topbar-search-text">Search docs</span>
-          <span className="topbar-search-shortcut" aria-hidden="true">
-            <span>Ctrl</span>
-            <span>K</span>
-          </span>
+        <div className="topbar-left">
+          <Link className="brand" href="/docs/home">
+            <span className="brand-mark" aria-hidden="true" />
+            <span>Scriptable iOS Widgets</span>
+          </Link>
         </div>
 
-        <div className="topbar-actions">
-          <nav className="topnav" aria-label="Top navigation">
-            {topLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={clsx('topnav-link', isActivePath(pathname, item.href) && 'topnav-link-active')}
-                aria-current={isActivePath(pathname, item.href) ? 'page' : undefined}
-              >
-                {item.label}
-              </Link>
-            ))}
+        <div className="topbar-center">
+          <SearchCommand />
+        </div>
+
+        <div className="topbar-right">
+          <nav className="topnav" aria-label="Top navigation" ref={navRef}>
+            {topNav.map((item) => {
+              const isActive = isTopItemActive(pathname, item);
+              const isOpen = openDropdown === item.href;
+
+              if (!hasChildren(item)) {
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="topnav-link"
+                    data-active={isActive}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {item.icon ? (
+                      <span className="nav-icon" aria-hidden="true">
+                        <Icon name={item.icon} size={16} />
+                      </span>
+                    ) : null}
+                    <span>{item.title}</span>
+                  </Link>
+                );
+              }
+
+              return (
+                <div
+                  key={item.href}
+                  className="topnav-item topnav-item-dropdown"
+                  onMouseEnter={() => setOpenDropdown(item.href)}
+                  onMouseLeave={() => {
+                    setOpenDropdown((current) => (current === item.href ? null : current));
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="topnav-link topnav-link-dropdown"
+                    data-active={isActive}
+                    data-open={isOpen}
+                    aria-haspopup="menu"
+                    aria-expanded={isOpen}
+                    onClick={() => {
+                      setOpenDropdown((current) => (current === item.href ? null : item.href));
+                    }}
+                  >
+                    {item.icon ? (
+                      <span className="nav-icon" aria-hidden="true">
+                        <Icon name={item.icon} size={16} />
+                      </span>
+                    ) : null}
+                    <span>{item.title}</span>
+                    <Icon name="chevron" size={14} className="topnav-caret" />
+                  </button>
+
+                  <div className="topnav-dropdown" data-open={isOpen} role="menu" aria-label={`${item.title} menu`}>
+                    {item.children.map((child) => {
+                      const childActive = isActivePath(pathname, child.href);
+
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className="topnav-dropdown-link"
+                          data-active={childActive}
+                          role="menuitem"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          {child.title}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </nav>
 
           <a
-            className="topbar-repo"
+            className="action-button action-button-primary"
             href="https://github.com/rushhiii/Scriptable-IOSWidgets"
             target="_blank"
             rel="noreferrer"

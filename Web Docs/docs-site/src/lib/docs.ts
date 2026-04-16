@@ -33,12 +33,21 @@ export type AdjacentDocs = {
   next: { title: string; slugPath: string } | null;
 };
 
+export type DocsSearchItem = {
+  title: string;
+  summary: string;
+  headings: Array<{ depth: 2 | 3; title: string }>;
+  href: string;
+  section: string;
+};
+
 type Frontmatter = {
   title?: string;
   description?: string;
   section?: string;
   order?: number | string;
   updated?: string;
+  toc?: boolean;
 };
 
 const DOCS_ROOT = path.join(process.cwd(), 'content', 'docs');
@@ -110,12 +119,37 @@ function compactWhitespace(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+function stripHtmlTags(value: string): string {
+  return value.replace(/<[^>]+>/g, ' ');
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function stripLegacyLayoutTags(value: string): string {
   return value
-    .replace(/<\/?section\b[^>]*>/g, '')
-    .replace(/<\/?div\b[^>]*>/g, '')
-    .replace(/<p\b[^>]*>/g, '')
-    .replace(/<\/p>/g, '\n');
+    .replace(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi, (_, levelRaw: string, headingRaw: string) => {
+      const level = Math.min(6, Math.max(1, Number(levelRaw)));
+      const hashes = '#'.repeat(level);
+      const heading = compactWhitespace(stripHtmlTags(String(headingRaw)));
+
+      if (!heading) {
+        return '\n';
+      }
+
+      return `\n${hashes} ${heading}\n`;
+    })
+    .replace(/<\/?section\b[^>]*>/gi, '\n')
+    .replace(/<\/?div\b[^>]*>/gi, '\n')
+    .replace(/<p\b[^>]*>/gi, '')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n');
 }
 
 function renderLegacyHero(attributesRaw: string): string {
@@ -151,20 +185,28 @@ function renderLegacyHero(attributesRaw: string): string {
 
 function renderLegacyCallout(attributesRaw: string, inner: string): string {
   const attributes = parseTagAttributes(attributesRaw);
-  const title = attributes.title || 'Note';
+  const allowedVariants = new Set(['note', 'warning', 'tip', 'updated', 'alert']);
+  const variantCandidate = (attributes.variant || 'note').toLowerCase();
+  const variant = allowedVariants.has(variantCandidate) ? variantCandidate : 'note';
+  const title = compactWhitespace(attributes.title || 'Note');
   const contentLines = inner
-    .trim()
+    .replace(/\r\n/g, '\n')
     .split('\n')
-    .map((line) => line.trim())
+    .map((line) => compactWhitespace(stripHtmlTags(line)))
     .filter((line) => line.length > 0);
 
-  const quotedBody = contentLines.map((line) => `> ${line}`).join('\n');
+  const renderedLines = [
+    `<div class="callout" data-variant="${variant}">`,
+    `  <div class="callout-title">${escapeHtml(title)}</div>`,
+  ];
 
-  if (!quotedBody) {
-    return `> **${title}**`;
+  if (contentLines.length > 0) {
+    renderedLines.push(...contentLines.map((line) => `  <p>${escapeHtml(line)}</p>`));
   }
 
-  return [`> **${title}**`, '>', quotedBody].join('\n');
+  renderedLines.push('</div>');
+
+  return renderedLines.join('\n');
 }
 
 function renderLegacyCards(cardBlock: string): string {
@@ -217,7 +259,22 @@ export function slugifyHeading(value: string): string {
     .replace(/-+/g, '-');
 }
 
+function createHeadingIdGenerator() {
+  const slugCounts = new Map<string, number>();
+
+  return (text: string): string => {
+    const baseId = slugifyHeading(text) || 'section';
+    const seen = slugCounts.get(baseId) ?? 0;
+
+    slugCounts.set(baseId, seen + 1);
+
+    return seen === 0 ? baseId : `${baseId}-${seen}`;
+  };
+}
+
 function extractToc(markdown: string): TocItem[] {
+  const getHeadingId = createHeadingIdGenerator();
+
   return markdown
     .split('\n')
     .map((line) => line.trim())
@@ -228,7 +285,7 @@ function extractToc(markdown: string): TocItem[] {
       return {
         depth: match[1] === '##' ? 2 : 3,
         text,
-        id: slugifyHeading(text),
+        id: getHeadingId(text),
       };
     });
 }
@@ -271,7 +328,7 @@ const loadDocs = cache(async (): Promise<DocPage[]> => {
         order,
         updated: frontmatter.updated?.trim() || null,
         body: normalizedBody,
-        toc: extractToc(normalizedBody),
+        toc: frontmatter.toc === false ? [] : extractToc(normalizedBody),
       } satisfies DocPage;
     })
   );
@@ -320,19 +377,78 @@ export async function getDocBySlug(slugParts: string[]): Promise<DocPage | null>
   return docs.find((doc) => doc.slugPath === slugPath) || null;
 }
 
+const GET_STARTED_SLUGS = new Set(['home', 'getting-started', 'installation', 'usage']);
+const NAV_TITLE_OVERRIDES: Record<string, string> = {
+  'getting-started': 'Get Started',
+};
+const NAV_PAGE_RANK: Record<string, number> = {
+  home: 0,
+  'getting-started': 1,
+  installation: 2,
+  usage: 3,
+  widgets: 0,
+};
+
+function getSidebarSectionLabel(doc: DocPage): string {
+  if (GET_STARTED_SLUGS.has(doc.slugPath)) {
+    return 'Get Started';
+  }
+
+  if (doc.section.toLowerCase() === 'widgets') {
+    return 'Widgets';
+  }
+
+  return 'Resources';
+}
+
+function getSidebarSectionRank(doc: DocPage): number {
+  if (GET_STARTED_SLUGS.has(doc.slugPath)) {
+    return 0;
+  }
+
+  if (doc.section.toLowerCase() === 'widgets') {
+    return 1;
+  }
+
+  return 2;
+}
+
+function getSidebarPageRank(doc: DocPage): number {
+  return NAV_PAGE_RANK[doc.slugPath] ?? 100;
+}
+
 export async function getDocsNavigation(): Promise<NavSection[]> {
   const docs = await loadDocs();
+  const sidebarDocs = [...docs].sort((a, b) => {
+    const sectionRankDiff = getSidebarSectionRank(a) - getSidebarSectionRank(b);
+    if (sectionRankDiff !== 0) {
+      return sectionRankDiff;
+    }
+
+    const pageRankDiff = getSidebarPageRank(a) - getSidebarPageRank(b);
+    if (pageRankDiff !== 0) {
+      return pageRankDiff;
+    }
+
+    if (a.order !== b.order) {
+      return a.order - b.order;
+    }
+
+    return a.title.localeCompare(b.title);
+  });
+
   const sectionMap = new Map<string, NavSection>();
 
-  for (const doc of docs) {
-    const section = sectionMap.get(doc.section) || { section: doc.section, pages: [] };
+  for (const doc of sidebarDocs) {
+    const sectionLabel = getSidebarSectionLabel(doc);
+    const section = sectionMap.get(sectionLabel) || { section: sectionLabel, pages: [] };
     section.pages.push({
-      title: doc.title,
+      title: NAV_TITLE_OVERRIDES[doc.slugPath] || doc.title,
       description: doc.description,
       slug: doc.slug,
       slugPath: doc.slugPath,
     });
-    sectionMap.set(doc.section, section);
+    sectionMap.set(sectionLabel, section);
   }
 
   return Array.from(sectionMap.values());
@@ -364,4 +480,22 @@ export async function getPrevNextDoc(slugParts: string[]): Promise<AdjacentDocs>
         }
       : null,
   };
+}
+
+export async function getDocsSearchIndex(): Promise<DocsSearchItem[]> {
+  const docs = await loadDocs();
+
+  return docs.map((doc) => {
+    const href = `/docs/${doc.slugPath}`;
+    const headings = doc.toc.map((heading) => ({ depth: heading.depth, title: heading.text }));
+    const summary = doc.description || (headings[0]?.title ?? '');
+
+    return {
+      title: doc.title,
+      summary,
+      headings,
+      href,
+      section: doc.section,
+    };
+  });
 }

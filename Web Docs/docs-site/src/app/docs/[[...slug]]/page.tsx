@@ -8,17 +8,51 @@ import {
   getPrevNextDoc,
   slugifyHeading,
 } from '@/lib/docs';
+import { inferDocIconName, type DocIconName } from '@/lib/doc-icons';
+import {
+  Blocks,
+  BookOpen,
+  Download,
+  FileText,
+  Home,
+  LayoutGrid,
+  List,
+  Map as MapIcon,
+  Rocket,
+  SlidersHorizontal,
+  type LucideIcon,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import React, { isValidElement } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
 type RouteParams = {
   slug?: string[];
 };
+
+const titleIconMap: Record<DocIconName, LucideIcon> = {
+  home: Home,
+  rocket: Rocket,
+  download: Download,
+  sliders: SlidersHorizontal,
+  grid: LayoutGrid,
+  list: List,
+  book: BookOpen,
+  blocks: Blocks,
+  map: MapIcon,
+  file: FileText,
+};
+
+function DocTitleIcon({ name }: { name: DocIconName }) {
+  const IconComponent = titleIconMap[name];
+
+  return <IconComponent size={34} strokeWidth={1.8} aria-hidden="true" />;
+}
 
 function normalizeDocHref(href?: string): string | undefined {
   if (!href) {
@@ -128,26 +162,56 @@ export default async function DocsPage({
   }
 
   const adjacent = await getPrevNextDoc(doc.slug);
+  const hasToc = doc.toc.length > 0;
+  const titleIcon = inferDocIconName(doc.section, doc.slugPath);
+
+  const tocIdsByBase = new Map<string, string[]>();
+  for (const item of doc.toc) {
+    const baseId = slugifyHeading(item.text) || 'section';
+    const idsForBase = tocIdsByBase.get(baseId) ?? [];
+    idsForBase.push(item.id);
+    tocIdsByBase.set(baseId, idsForBase);
+  }
+
+  const headingUseCounts = new Map<string, number>();
+  const fallbackUseCounts = new Map<string, number>();
+
+  const resolveHeadingId = (headingText: string) => {
+    const baseId = slugifyHeading(headingText) || 'section';
+
+    const seenForBase = headingUseCounts.get(baseId) ?? 0;
+    headingUseCounts.set(baseId, seenForBase + 1);
+
+    const tocIds = tocIdsByBase.get(baseId);
+    const tocId = tocIds?.[seenForBase];
+
+    if (tocId) {
+      return tocId;
+    }
+
+    const fallbackSeen = fallbackUseCounts.get(baseId) ?? 0;
+    fallbackUseCounts.set(baseId, fallbackSeen + 1);
+
+    return fallbackSeen === 0 ? baseId : `${baseId}-${fallbackSeen}`;
+  };
 
   const markdownComponents: Components = {
-    h2: ({ children, ...props }) => (
-      <h2
-        id={slugifyHeading(flattenText(children))}
-        className="scroll-mt-28 font-display text-3xl font-semibold tracking-tight text-ink"
-        {...props}
-      >
-        {children}
-      </h2>
-    ),
-    h3: ({ children, ...props }) => (
-      <h3
-        id={slugifyHeading(flattenText(children))}
-        className="scroll-mt-28 font-display text-2xl font-semibold tracking-tight text-ink"
-        {...props}
-      >
-        {children}
-      </h3>
-    ),
+    h2: ({ children, ...props }) => {
+      const headingText = flattenText(children);
+      return (
+        <h2 id={resolveHeadingId(headingText)} {...props}>
+          {children}
+        </h2>
+      );
+    },
+    h3: ({ children, ...props }) => {
+      const headingText = flattenText(children);
+      return (
+        <h3 id={resolveHeadingId(headingText)} {...props}>
+          {children}
+        </h3>
+      );
+    },
     a: ({ href, children, ...props }) => {
       const normalizedHref = normalizeDocHref(href);
       const isExternal = normalizedHref?.startsWith('http');
@@ -155,7 +219,6 @@ export default async function DocsPage({
       return (
         <a
           href={normalizedHref}
-          className="font-medium text-brand underline decoration-brand/30 underline-offset-4 transition-colors hover:text-ink"
           target={isExternal ? '_blank' : undefined}
           rel={isExternal ? 'noreferrer' : undefined}
           {...props}
@@ -164,65 +227,50 @@ export default async function DocsPage({
         </a>
       );
     },
-    blockquote: ({ children, ...props }) => (
-      <blockquote
-        className="rounded-2xl border-l-4 border-brand/70 bg-brand/15 px-5 py-4 text-ink"
-        {...props}
-      >
-        {children}
-      </blockquote>
-    ),
-    pre: ({ children, ...props }) => (
-      <pre
-        className="overflow-x-auto rounded-2xl border border-line/50 bg-codebg px-4 py-3 text-sm text-[rgb(var(--code-text))]"
-        {...props}
-      >
-        {children}
-      </pre>
-    ),
-    code: ({ children, ...props }) => (
-      <code className="font-mono text-[0.9em] text-brand" {...props}>
-        {children}
-      </code>
-    ),
+    blockquote: ({ children, ...props }) => <blockquote {...props}>{children}</blockquote>,
+    pre: ({ children, ...props }) => <pre {...props}>{children}</pre>,
+    code: ({ children, ...props }) => <code {...props}>{children}</code>,
   };
 
   return (
-    <div className="docs-shell mx-auto w-full max-w-docs gap-4 px-4 py-5 md:gap-6 md:px-8 lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,290px)]">
-      <div className="fade-in-up lg:col-span-1">
-        <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
-      </div>
+    <div className={hasToc ? 'docs-shell' : 'docs-shell docs-shell-no-toc'}>
+      <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
 
-      <main className="fade-in-up fade-delay-1 lg:col-span-1">
-        <article className="content-panel">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand/85">{doc.section}</p>
+      <main className="content-panel fade-in">
+        <article>
+          <header className="doc-header">
+            <p className="doc-kicker">{doc.section}</p>
 
-          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink md:text-5xl">
-            {doc.title}
-          </h1>
+            <div className="doc-title-row">
+              {titleIcon ? (
+                <span className="doc-title-icon">
+                  <DocTitleIcon name={titleIcon} />
+                </span>
+              ) : null}
+              <h1 className="doc-title">{doc.title}</h1>
+            </div>
 
-          {doc.description ? (
-            <p className="mt-3 max-w-2xl text-base text-muted md:text-lg">{doc.description}</p>
-          ) : null}
+            {doc.description ? <p className="doc-summary">{doc.description}</p> : null}
+          </header>
 
-          {doc.updated ? (
-            <p className="mt-5 text-xs uppercase tracking-[0.14em] text-muted/80">Updated {doc.updated}</p>
-          ) : null}
-
-          <div className="prose prose-lg mt-10 max-w-none prose-headings:font-display prose-headings:text-ink prose-p:text-ink/90 prose-strong:text-ink prose-li:text-ink/85 prose-code:text-brand">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+          <div className="doc-content">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={markdownComponents}
+            >
               {doc.body}
             </ReactMarkdown>
           </div>
 
-          <div className="mt-12 grid gap-3 border-t border-line/40 pt-6 sm:grid-cols-2">
+          <div className="card-grid" style={{ marginTop: '2.25rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
             {adjacent.previous ? (
               <Link
                 href={`/docs/${adjacent.previous.slugPath}`}
-                className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 transition-colors hover:border-brand/60 hover:bg-brand/15"
+                className="card"
               >
-                <p className="text-xs uppercase tracking-[0.16em] text-muted">Previous</p>
-                <p className="mt-1 font-medium text-ink">{adjacent.previous.title}</p>
+                <p className="card-meta">Previous</p>
+                <p className="card-title">{adjacent.previous.title}</p>
               </Link>
             ) : (
               <div />
@@ -231,19 +279,23 @@ export default async function DocsPage({
             {adjacent.next ? (
               <Link
                 href={`/docs/${adjacent.next.slugPath}`}
-                className="rounded-2xl border border-line/45 bg-panel/55 px-4 py-3 text-left transition-colors hover:border-brand/60 hover:bg-brand/15"
+                className="card"
               >
-                <p className="text-xs uppercase tracking-[0.16em] text-muted">Next</p>
-                <p className="mt-1 font-medium text-ink">{adjacent.next.title}</p>
+                <p className="card-meta">Next</p>
+                <p className="card-title">{adjacent.next.title}</p>
               </Link>
             ) : null}
           </div>
+
+          {doc.updated ? (
+            <p className="doc-kicker" style={{ marginTop: '1.5rem', marginBottom: 0 }}>
+              Updated {doc.updated}
+            </p>
+          ) : null}
         </article>
       </main>
 
-      <div className="fade-in-up fade-delay-2 lg:col-span-2 xl:col-span-1">
-        <DocsToc items={doc.toc} />
-      </div>
+      {hasToc ? <DocsToc items={doc.toc} /> : null}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { MoonStar, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type ThemeMode = 'dark' | 'light';
@@ -23,23 +24,21 @@ export function ThemeToggle() {
 
   return (
     <button
+      className="theme-toggle"
       type="button"
       role="switch"
       aria-checked={isDark}
       aria-label="Toggle theme"
       onClick={toggleTheme}
-      className="grid h-9 w-14 place-items-center rounded-full border border-line/60 bg-panel/80 text-ink transition hover:border-brand/70"
     >
-      <span
-        className={`relative flex h-6 w-11 items-center rounded-full px-1 transition-colors ${
-          isDark ? 'bg-brand/35' : 'bg-line/40'
-        }`}
-      >
-        <span
-          className={`absolute h-4 w-4 rounded-full bg-panelStrong shadow transition-transform ${
-            isDark ? 'translate-x-5' : 'translate-x-0'
-          }`}
-        />
+      <span className="theme-toggle-track">
+        <span className="theme-toggle-thumb" aria-hidden="true">
+          {isDark ? (
+            <MoonStar className="theme-toggle-icon" strokeWidth={1.8} />
+          ) : (
+            <Sun className="theme-toggle-icon" strokeWidth={1.8} />
+          )}
+        </span>
       </span>
     </button>
   );
