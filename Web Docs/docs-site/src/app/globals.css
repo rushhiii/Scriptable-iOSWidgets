@@ -3523,7 +3523,7 @@ code {
   }
 
   .docs-footer-inner {
-    padding: 1.25rem 0.85rem 0.7rem;
+    /* padding: 1.25rem 0.85rem 0.7rem; */
     gap: 1.35rem;
     grid-template-columns: minmax(0, 1fr);
   }
