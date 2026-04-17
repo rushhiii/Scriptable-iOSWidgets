@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { DocsFooter } from '@/components/docs/Footer';
 import { DocsSubnav } from '@/components/docs/Subnav';
+import { DocsTranslationSync } from '@/components/docs/TranslationSync';
 import { DocsTopbar } from '@/components/docs/Topbar';
 import { getDocsNavigation } from '@/lib/docs';
 
@@ -13,6 +14,8 @@ export default async function DocsLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="page-shell">
+      <DocsTranslationSync />
+
       <header className="site-nav">
         <DocsTopbar />
         <DocsSubnav resourcesLinks={resourcesLinks} />

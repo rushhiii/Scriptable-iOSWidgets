@@ -1,6 +1,7 @@
 import { DocsSidebar } from '@/components/docs/Sidebar';
-import { DocsToc } from '@/components/docs/Toc';
+import { DocsToc } from '../../../components/docs/Toc';
 import { FloatingThemeToggle } from '@/components/docs/FloatingThemeToggle';
+import { ContentTocToggle } from '@/components/docs/ContentTocToggle';
 import {
   getAllDocSlugs,
   getDocBySlug,
@@ -241,7 +242,10 @@ export default async function DocsPage({
         <main className="content-panel fade-in">
           <article>
             <header className="doc-header">
-              <p className="doc-kicker">{doc.section}</p>
+              <div className="doc-header-top">
+                <p className="doc-kicker">{doc.section}</p>
+                {hasToc ? <ContentTocToggle /> : null}
+              </div>
 
               <div className="doc-title-row">
                 {titleIcon ? (

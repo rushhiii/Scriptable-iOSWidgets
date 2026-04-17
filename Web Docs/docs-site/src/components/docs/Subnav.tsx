@@ -1,8 +1,9 @@
 'use client';
 
+import { getStoredTranslateLanguage, onTranslateLanguageChange, openTranslatedPage } from '@/lib/google-translate';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, ChevronDown, Download, Home, Info, LayoutGrid, type LucideIcon } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Download, Globe, Home, Info, LayoutGrid, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type SubnavResourceLink = {
@@ -27,6 +28,19 @@ const baseSubnavLinks = [
   { title: 'Usage', href: '/docs/usage', icon: 'book' },
   { title: 'Widgets', href: '/docs/widgets', icon: 'grid' },
 ] as const;
+
+type LanguageOption = {
+  locale: string;
+  label: string;
+  targetLang: string;
+};
+
+const languageOptions: LanguageOption[] = [
+  { locale: 'en-US', label: '🇺🇸 English', targetLang: 'en' },
+  { locale: 'fr-FR', label: '🇫🇷 Français', targetLang: 'fr' },
+  { locale: 'zh-CN', label: '🇨🇳 中文', targetLang: 'zh-CN' },
+  { locale: 'ja-JP', label: '🇯🇵 日本語', targetLang: 'ja' },
+];
 
 function normalizePath(path: string): string {
   const noHash = path.split('#')[0];
@@ -93,26 +107,45 @@ function Icon({
 export function DocsSubnav({ resourcesLinks }: DocsSubnavProps) {
   const pathname = usePathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const navRef = useRef<HTMLElement | null>(null);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [activeLocale, setActiveLocale] = useState<string>('en-US');
+  const subnavRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setOpenDropdown(null);
+    setIsLanguageMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
+    const syncActiveLocale = (targetLang: string) => {
+      const syncedLanguage = languageOptions.find((language) => language.targetLang === targetLang);
+
+      if (syncedLanguage) {
+        setActiveLocale(syncedLanguage.locale);
+      }
+    };
+
+    syncActiveLocale(getStoredTranslateLanguage());
+
+    return onTranslateLanguageChange(syncActiveLocale);
+  }, []);
+
+  useEffect(() => {
     function onPointerDown(event: PointerEvent) {
-      if (!navRef.current) {
+      if (!subnavRef.current) {
         return;
       }
 
-      if (!navRef.current.contains(event.target as Node)) {
+      if (!subnavRef.current.contains(event.target as Node)) {
         setOpenDropdown(null);
+        setIsLanguageMenuOpen(false);
       }
     }
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setOpenDropdown(null);
+        setIsLanguageMenuOpen(false);
       }
     }
 
@@ -140,12 +173,17 @@ export function DocsSubnav({ resourcesLinks }: DocsSubnavProps) {
     ];
   }, [resourcesLinks]);
 
+  const activeLanguage = useMemo(
+    () => languageOptions.find((language) => language.locale === activeLocale) ?? languageOptions[0],
+    [activeLocale]
+  );
+
   return (
     <div className="subnav">
-      <div className="subnav-inner">
+      <div className="subnav-inner" ref={subnavRef}>
         <div className="subnav-label">Scriptable iOSWidgets Docs</div>
 
-        <nav className="subnav-links" aria-label="Section navigation" ref={navRef}>
+        <nav className="subnav-links" aria-label="Section navigation">
           {subnavLinks.map((item) => {
             const isActive = isSubnavItemActive(pathname, item);
             const isOpen = openDropdown === item.href;
@@ -155,7 +193,10 @@ export function DocsSubnav({ resourcesLinks }: DocsSubnavProps) {
                 <div
                   key={item.href}
                   className="subnav-item subnav-item-dropdown"
-                  onMouseEnter={() => setOpenDropdown(item.href)}
+                  onMouseEnter={() => {
+                    setOpenDropdown(item.href);
+                    setIsLanguageMenuOpen(false);
+                  }}
                   onMouseLeave={() => {
                     setOpenDropdown((current) => (current === item.href ? null : current));
                   }}
@@ -168,6 +209,7 @@ export function DocsSubnav({ resourcesLinks }: DocsSubnavProps) {
                     aria-haspopup="menu"
                     aria-expanded={isOpen}
                     onClick={() => {
+                      setIsLanguageMenuOpen(false);
                       setOpenDropdown((current) => (current === item.href ? null : item.href));
                     }}
                   >
@@ -191,7 +233,10 @@ export function DocsSubnav({ resourcesLinks }: DocsSubnavProps) {
                           className="subnav-dropdown-link"
                           data-active={childActive}
                           role="menuitem"
-                          onClick={() => setOpenDropdown(null)}
+                          onClick={() => {
+                            setOpenDropdown(null);
+                            setIsLanguageMenuOpen(false);
+                          }}
                         >
                           {child.title}
                         </Link>
@@ -220,6 +265,62 @@ export function DocsSubnav({ resourcesLinks }: DocsSubnavProps) {
             );
           })}
         </nav>
+
+        <div className="subnav-actions">
+          <div
+            className="subnav-item subnav-item-dropdown subnav-language-switcher"
+            onMouseEnter={() => {
+              setIsLanguageMenuOpen(true);
+              setOpenDropdown(null);
+            }}
+            onMouseLeave={() => {
+              setIsLanguageMenuOpen(false);
+            }}
+          >
+            <button
+              type="button"
+              className="subnav-link subnav-link-dropdown subnav-language-trigger"
+              data-open={isLanguageMenuOpen}
+              aria-haspopup="menu"
+              aria-expanded={isLanguageMenuOpen}
+              onClick={() => {
+                setOpenDropdown(null);
+                setIsLanguageMenuOpen((current) => !current);
+              }}
+            >
+              <span className="subnav-language-icon" aria-hidden="true">
+                <Globe size={14} />
+              </span>
+              <span className="subnav-language-label">{activeLanguage.label}</span>
+              <ChevronDown className="subnav-caret" aria-hidden="true" size={14} />
+            </button>
+
+            <div className="subnav-dropdown subnav-language-dropdown" data-open={isLanguageMenuOpen} role="menu" aria-label="Language menu">
+              {languageOptions.map((language) => {
+                const isSelected = language.locale === activeLocale;
+
+                return (
+                  <button
+                    key={language.locale}
+                    type="button"
+                    className="subnav-dropdown-link subnav-language-option"
+                    data-active={isSelected}
+                    role="menuitemradio"
+                    aria-checked={isSelected}
+                    onClick={() => {
+                      setActiveLocale(language.locale);
+                      setIsLanguageMenuOpen(false);
+                      openTranslatedPage(language.targetLang);
+                    }}
+                  >
+                    <span>{language.label}</span>
+                    {isSelected ? <Check className="subnav-language-check" aria-hidden="true" size={14} /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

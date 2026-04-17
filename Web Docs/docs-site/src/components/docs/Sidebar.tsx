@@ -2,6 +2,7 @@
 
 import type { NavSection } from '@/lib/docs';
 import { inferDocIconName, type DocIconName } from '@/lib/doc-icons';
+import { getStoredTranslateLanguage, onTranslateLanguageChange, openTranslatedPage } from '@/lib/google-translate';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -12,12 +13,14 @@ import {
   ChevronUp,
   Download,
   FileText,
+  Globe,
   Home,
   LayoutGrid,
   List,
   Map,
   Rocket,
   SlidersHorizontal,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -35,7 +38,21 @@ type WidgetGroup = {
   children: Array<{ href: string; title: string }>;
 };
 
+type LanguageOption = {
+  locale: string;
+  label: string;
+  targetLang: string;
+};
+
 const SIDEBAR_SCROLL_KEY = 'docs.sidebar.scrollTop';
+const TABLET_MAX_WIDTH = 1020;
+
+const languageOptions: LanguageOption[] = [
+  { locale: 'en-US', label: 'us English', targetLang: 'en' },
+  { locale: 'fr-FR', label: 'FR Français', targetLang: 'fr' },
+  { locale: 'zh-CN', label: 'CN 中文', targetLang: 'zh-CN' },
+  { locale: 'ja-JP', label: 'JP 日本語', targetLang: 'ja' },
+];
 
 function toDocHref(slugPath: string): string {
   return `/docs/${slugPath}`;
@@ -116,6 +133,10 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   const currentPathname = pathname || toDocHref(currentSlugPath);
   const sidebarContainerRef = useRef<HTMLElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const languageMenuRef = useRef<HTMLDivElement | null>(null);
+  const [isTabletSidebarOpen, setIsTabletSidebarOpen] = useState(false);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [activeLocale, setActiveLocale] = useState<string>('en-US');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
 
@@ -171,6 +192,11 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
     syncScrollTopVisibility();
   }, [persistScrollPosition, syncScrollTopVisibility]);
 
+  const closeTabletSidebar = useCallback(() => {
+    setIsTabletSidebarOpen(false);
+    setIsLanguageMenuOpen(false);
+  }, []);
+
   const widgetGroup = useMemo(() => {
     const section = navigation.find((entry) => entry.section.toLowerCase() === 'widgets');
     if (!section) {
@@ -180,6 +206,80 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   }, [navigation]);
 
   const [isWidgetOpen, setIsWidgetOpen] = useState(true);
+
+  useEffect(() => {
+    closeTabletSidebar();
+  }, [pathname, closeTabletSidebar]);
+
+  useEffect(() => {
+    const syncActiveLocale = (targetLang: string) => {
+      const syncedLanguage = languageOptions.find((language) => language.targetLang === targetLang);
+
+      if (syncedLanguage) {
+        setActiveLocale(syncedLanguage.locale);
+      }
+    };
+
+    syncActiveLocale(getStoredTranslateLanguage());
+
+    return onTranslateLanguageChange(syncActiveLocale);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const tabletQuery = window.matchMedia(`(max-width: ${TABLET_MAX_WIDTH}px)`);
+
+    const onSidebarToggle = () => {
+      if (!tabletQuery.matches) {
+        return;
+      }
+
+      setIsTabletSidebarOpen((open) => !open);
+    };
+
+    const onResize = () => {
+      if (!tabletQuery.matches) {
+        setIsTabletSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('docs-sidebar-toggle', onSidebarToggle as EventListener);
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('docs-sidebar-toggle', onSidebarToggle as EventListener);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    function onPointerDown(event: PointerEvent) {
+      if (!languageMenuRef.current) {
+        return;
+      }
+
+      if (!languageMenuRef.current.contains(event.target as Node)) {
+        setIsLanguageMenuOpen(false);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsLanguageMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     if (!widgetGroup) {
@@ -322,7 +422,8 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
     }
 
     persistScrollPosition();
-  }, [persistScrollPosition]);
+    closeTabletSidebar();
+  }, [closeTabletSidebar, persistScrollPosition]);
 
   const handleScrollTopClick = useCallback(() => {
     const sidebar = sidebarRef.current;
@@ -352,116 +453,188 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   }, []);
 
   return (
-    <aside ref={sidebarContainerRef} className="sidebar" onClickCapture={handleClickCapture}>
+    <>
       <button
         type="button"
-        className="sidebar-scroll-arrow sidebar-scroll-arrow-top"
-        data-visible={showScrollTop}
-        aria-label="Scroll sidebar to top"
-        onClick={handleScrollTopClick}
+        className="sidebar-tablet-backdrop"
+        data-open={isTabletSidebarOpen}
+        aria-label="Close sidebar"
+        onClick={closeTabletSidebar}
+      />
+
+      <aside
+        ref={sidebarContainerRef}
+        className="sidebar"
+        data-tablet-open={isTabletSidebarOpen}
+        onClickCapture={handleClickCapture}
       >
-        <ChevronUp size={20} strokeWidth={1.9} aria-hidden="true" />
-      </button>
+        <button
+          type="button"
+          className="sidebar-tablet-close"
+          aria-label="Close sidebar"
+          onClick={closeTabletSidebar}
+        >
+          <X size={16} strokeWidth={1.9} aria-hidden="true" />
+        </button>
 
-      <div className="sidebar-scroll-content" ref={sidebarRef}>
-        {navigation.map((section) => {
-          const isWidgetSection = section.section.toLowerCase() === 'widgets' && widgetGroup;
+        <div className="sidebar-tablet-header">
+          <Link href="/docs/home" className="sidebar-tablet-brand" onClick={closeTabletSidebar}>
+            <span className="sidebar-tablet-brand-mark" aria-hidden="true">
+              <img src="/favicon.ico" alt="" />
+            </span>
+            <span className="sidebar-tablet-brand-text">Scriptable Docs</span>
+          </Link>
 
-          if (isWidgetSection) {
-            const groupIsActive = isExactPath(currentPathname, widgetGroup.href);
+          <div className="sidebar-tablet-language-wrap" ref={languageMenuRef}>
+            <button
+              type="button"
+              className="sidebar-tablet-language"
+              data-open={isLanguageMenuOpen}
+              aria-label="Open language options"
+              aria-haspopup="menu"
+              aria-expanded={isLanguageMenuOpen}
+              onClick={() => setIsLanguageMenuOpen((open) => !open)}
+            >
+              <Globe size={20} aria-hidden="true" />
+              <ChevronDown className="sidebar-tablet-language-caret" size={15} aria-hidden="true" />
+            </button>
+
+            <div className="sidebar-tablet-language-menu" data-open={isLanguageMenuOpen} role="menu" aria-label="Sidebar language menu">
+              {languageOptions.map((language) => {
+                const isSelected = language.locale === activeLocale;
+
+                return (
+                  <button
+                    key={language.locale}
+                    type="button"
+                    className="sidebar-tablet-language-option"
+                    data-active={isSelected}
+                    role="menuitemradio"
+                    aria-checked={isSelected}
+                    onClick={() => {
+                      setActiveLocale(language.locale);
+                      setIsLanguageMenuOpen(false);
+                      openTranslatedPage(language.targetLang);
+                    }}
+                  >
+                    {language.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="sidebar-scroll-arrow sidebar-scroll-arrow-top"
+          data-visible={showScrollTop}
+          aria-label="Scroll sidebar to top"
+          onClick={handleScrollTopClick}
+        >
+          <ChevronUp size={20} strokeWidth={1.9} aria-hidden="true" />
+        </button>
+
+        <div className="sidebar-scroll-content" ref={sidebarRef}>
+          {navigation.map((section) => {
+            const isWidgetSection = section.section.toLowerCase() === 'widgets' && widgetGroup;
+
+            if (isWidgetSection) {
+              const groupIsActive = isExactPath(currentPathname, widgetGroup.href);
+
+              return (
+                <div key={section.section} className="sidebar-section">
+                  <div className="sidebar-title">{section.section}</div>
+                  <div className="sidebar-section-items">
+                    <div className="sidebar-group" data-open={isWidgetOpen} data-active={groupIsActive}>
+                      <div className="sidebar-group-row">
+                        <Link
+                          href={widgetGroup.href}
+                          className="sidebar-link sidebar-link-group"
+                          data-active={groupIsActive}
+                        >
+                          <span className="sidebar-item-icon" aria-hidden="true">
+                            <Icon name="grid" size={14} />
+                          </span>
+                          <span>{widgetGroup.title}</span>
+                        </Link>
+                        <button
+                          type="button"
+                          className="sidebar-group-toggle"
+                          data-open={isWidgetOpen}
+                          aria-expanded={isWidgetOpen}
+                          aria-label={`${isWidgetOpen ? 'Collapse' : 'Expand'} ${widgetGroup.title}`}
+                          onClick={() => setIsWidgetOpen((open) => !open)}
+                        >
+                          <Icon name="chevron" size={14} />
+                        </button>
+                      </div>
+
+                      <div className="sidebar-children">
+                        {widgetGroup.children.map((child) => {
+                          const isCurrent = isExactPath(currentPathname, child.href);
+
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className="sidebar-sublink"
+                              data-active={isCurrent}
+                              aria-current={isCurrent ? 'page' : undefined}
+                            >
+                              <span>{child.title}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
 
             return (
               <div key={section.section} className="sidebar-section">
                 <div className="sidebar-title">{section.section}</div>
                 <div className="sidebar-section-items">
-                  <div className="sidebar-group" data-open={isWidgetOpen} data-active={groupIsActive}>
-                    <div className="sidebar-group-row">
+                  {section.pages.map((page) => {
+                    const href = toDocHref(page.slugPath);
+                    const isCurrent = isExactPath(currentPathname, href);
+                    const icon = inferDocIconName(section.section, page.slugPath);
+
+                    return (
                       <Link
-                        href={widgetGroup.href}
-                        className="sidebar-link sidebar-link-group"
-                        data-active={groupIsActive}
+                        key={page.slugPath}
+                        href={href}
+                        className="sidebar-link"
+                        data-active={isCurrent}
+                        aria-current={isCurrent ? 'page' : undefined}
                       >
-                        <span className="sidebar-item-icon" aria-hidden="true">
-                          <Icon name="grid" size={14} />
-                        </span>
-                        <span>{widgetGroup.title}</span>
+                        {icon ? (
+                          <span className="sidebar-item-icon" aria-hidden="true">
+                            <Icon name={icon} size={14} />
+                          </span>
+                        ) : null}
+                        <span>{page.title}</span>
                       </Link>
-                      <button
-                        type="button"
-                        className="sidebar-group-toggle"
-                        data-open={isWidgetOpen}
-                        aria-expanded={isWidgetOpen}
-                        aria-label={`${isWidgetOpen ? 'Collapse' : 'Expand'} ${widgetGroup.title}`}
-                        onClick={() => setIsWidgetOpen((open) => !open)}
-                      >
-                        <Icon name="chevron" size={14} />
-                      </button>
-                    </div>
-
-                    <div className="sidebar-children">
-                      {widgetGroup.children.map((child) => {
-                        const isCurrent = isExactPath(currentPathname, child.href);
-
-                        return (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            className="sidebar-sublink"
-                            data-active={isCurrent}
-                            aria-current={isCurrent ? 'page' : undefined}
-                          >
-                            <span>{child.title}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
             );
-          }
+          })}
+        </div>
 
-          return (
-            <div key={section.section} className="sidebar-section">
-              <div className="sidebar-title">{section.section}</div>
-              <div className="sidebar-section-items">
-                {section.pages.map((page) => {
-                  const href = toDocHref(page.slugPath);
-                  const isCurrent = isExactPath(currentPathname, href);
-                  const icon = inferDocIconName(section.section, page.slugPath);
-
-                  return (
-                    <Link
-                      key={page.slugPath}
-                      href={href}
-                      className="sidebar-link"
-                      data-active={isCurrent}
-                      aria-current={isCurrent ? 'page' : undefined}
-                    >
-                      {icon ? (
-                        <span className="sidebar-item-icon" aria-hidden="true">
-                          <Icon name={icon} size={14} />
-                        </span>
-                      ) : null}
-                      <span>{page.title}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <button
-        type="button"
-        className="sidebar-scroll-arrow sidebar-scroll-arrow-bottom"
-        data-visible={showScrollBottom}
-        aria-label="Scroll sidebar to bottom"
-        onClick={handleScrollBottomClick}
-      >
-        <ChevronDown size={20} strokeWidth={1.9} aria-hidden="true" />
-      </button>
-    </aside>
+        <button
+          type="button"
+          className="sidebar-scroll-arrow sidebar-scroll-arrow-bottom"
+          data-visible={showScrollBottom}
+          aria-label="Scroll sidebar to bottom"
+          onClick={handleScrollBottomClick}
+        >
+          <ChevronDown size={20} strokeWidth={1.9} aria-hidden="true" />
+        </button>
+      </aside>
+    </>
   );
 }
