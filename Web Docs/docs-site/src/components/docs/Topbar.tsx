@@ -143,7 +143,7 @@ export function DocsTopbar() {
             <span className="brand-mark" aria-hidden="true">
               <img src="/favicon.ico" alt="" />
             </span>
-            <span>Scriptable iOS Widgets</span>
+            <span className="brand-name">Scriptable iOS Widgets</span>
           </Link>
         </div>
 

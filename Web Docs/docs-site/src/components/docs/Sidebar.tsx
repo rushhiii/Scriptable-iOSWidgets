@@ -48,10 +48,15 @@ const SIDEBAR_SCROLL_KEY = 'docs.sidebar.scrollTop';
 const TABLET_MAX_WIDTH = 1020;
 
 const languageOptions: LanguageOption[] = [
-  { locale: 'en-US', label: 'us English', targetLang: 'en' },
-  { locale: 'fr-FR', label: 'FR Français', targetLang: 'fr' },
-  { locale: 'zh-CN', label: 'CN 中文', targetLang: 'zh-CN' },
-  { locale: 'ja-JP', label: 'JP 日本語', targetLang: 'ja' },
+  { locale: 'en-US', label: '🇺🇸 English', targetLang: 'en' },
+  { locale: 'fr-FR', label: '🇫🇷 Français', targetLang: 'fr' },
+  { locale: 'zh-CN', label: '🇨🇳 中文', targetLang: 'zh-CN' },
+  { locale: 'ja-JP', label: '🇯🇵 日本語', targetLang: 'ja' },
+
+  // { locale: 'en-US', label: 'us English', targetLang: 'en' },
+  // { locale: 'fr-FR', label: 'FR Français', targetLang: 'fr' },
+  // { locale: 'zh-CN', label: 'CN 中文', targetLang: 'zh-CN' },
+  // { locale: 'ja-JP', label: 'JP 日本語', targetLang: 'ja' },
 ];
 
 function toDocHref(slugPath: string): string {
