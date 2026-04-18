@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight, Ellipsis, Menu } from 'lucide-react';
+import { DocPageActions } from './DocPageActions';
 import { SearchCommand } from './SearchCommand';
 
 type TopNavChild = {
@@ -48,6 +49,21 @@ function normalizePath(path: string): string {
   return trimmed;
 }
 
+function toDocSlugPath(pathname: string): string | null {
+  const normalizedPath = normalizePath(pathname);
+
+  if (normalizedPath === '/docs/home') {
+    return 'home';
+  }
+
+  if (!normalizedPath.startsWith('/docs/')) {
+    return null;
+  }
+
+  const slugPath = normalizedPath.slice('/docs/'.length).trim();
+  return slugPath.length > 0 ? slugPath : 'home';
+}
+
 function isActivePath(pathname: string, href: string): boolean {
   const current = normalizePath(pathname);
   const target = normalizePath(href);
@@ -77,6 +93,8 @@ function isTopItemActive(pathname: string, item: TopNavItem): boolean {
 
 export function DocsTopbar() {
   const pathname = usePathname();
+  const activePathname = pathname || '/docs/home';
+  const currentDocSlugPath = toDocSlugPath(activePathname);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
   const [openOverflowParent, setOpenOverflowParent] = useState<string | null>(null);
@@ -86,7 +104,7 @@ export function DocsTopbar() {
     setOpenDropdown(null);
     setIsOverflowMenuOpen(false);
     setOpenOverflowParent(null);
-  }, [pathname]);
+  }, [activePathname]);
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
@@ -139,6 +157,16 @@ export function DocsTopbar() {
             <Menu size={19} aria-hidden="true" />
           </button>
 
+          {/* {currentDocSlugPath ? (
+            <DocPageActions
+              slugPath={currentDocSlugPath}
+              className="topbar-doc-actions doc-page-actions-topbar"
+              triggerClassName="topbar-doc-actions-trigger"
+              menuClassName="topbar-doc-actions-menu"
+              triggerLabel="Page content actions"
+            />
+          ) : null} */}
+
           <Link className="brand" href="/docs/home">
             <span className="brand-mark" aria-hidden="true">
               <img src="/favicon.ico" alt="" />
@@ -155,7 +183,7 @@ export function DocsTopbar() {
           <div className="topnav-actions" ref={navRef}>
             <nav className="topnav" aria-label="Top navigation">
               {topNav.map((item) => {
-                const isActive = isTopItemActive(pathname, item);
+                const isActive = isTopItemActive(activePathname, item);
                 const isOpen = openDropdown === item.href;
 
                 if (!hasChildren(item)) {
@@ -200,7 +228,7 @@ export function DocsTopbar() {
 
                     <div className="topnav-dropdown" data-open={isOpen} role="menu" aria-label={`${item.title} menu`}>
                       {item.children.map((child) => {
-                        const childActive = isActivePath(pathname, child.href);
+                        const childActive = isActivePath(activePathname, child.href);
 
                         return (
                           <Link
@@ -241,7 +269,7 @@ export function DocsTopbar() {
 
               <div className="topnav-overflow-menu" data-open={isOverflowMenuOpen} role="menu" aria-label="Top navigation menu">
                 {topNav.map((item) => {
-                  const isActive = isTopItemActive(pathname, item);
+                  const isActive = isTopItemActive(activePathname, item);
 
                   if (!hasChildren(item)) {
                     return (
@@ -287,7 +315,7 @@ export function DocsTopbar() {
                         aria-label={`${item.title} links`}
                       >
                         {item.children.map((child) => {
-                          const childActive = isActivePath(pathname, child.href);
+                          const childActive = isActivePath(activePathname, child.href);
 
                           return (
                             <Link

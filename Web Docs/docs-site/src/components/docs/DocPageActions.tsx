@@ -5,6 +5,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 type DocPageActionsProps = {
   slugPath: string;
+  className?: string;
+  triggerClassName?: string;
+  menuClassName?: string;
+  triggerLabel?: string;
 };
 
 type CopyStatus = 'idle' | 'copied' | 'error';
@@ -33,7 +37,17 @@ async function writeToClipboard(text: string): Promise<void> {
   }
 }
 
-export function DocPageActions({ slugPath }: DocPageActionsProps) {
+function joinClassNames(...values: Array<string | undefined>): string {
+  return values.filter(Boolean).join(' ');
+}
+
+export function DocPageActions({
+  slugPath,
+  className,
+  triggerClassName,
+  menuClassName,
+  triggerLabel = 'Page actions',
+}: DocPageActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -117,11 +131,11 @@ export function DocPageActions({ slugPath }: DocPageActionsProps) {
       : 'Copy page as Markdown for LLMs';
 
   return (
-    <div className="doc-page-actions" ref={containerRef}>
+    <div className={joinClassNames('doc-page-actions', className)} ref={containerRef}>
       <button
         type="button"
-        className="doc-page-actions-trigger"
-        aria-label="Page actions"
+        className={joinClassNames('doc-page-actions-trigger', triggerClassName)}
+        aria-label={triggerLabel}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
@@ -129,7 +143,12 @@ export function DocPageActions({ slugPath }: DocPageActionsProps) {
         <Ellipsis size={16} aria-hidden="true" />
       </button>
 
-      <div className="doc-page-actions-menu" data-open={isOpen} role="menu" aria-label="Page actions menu">
+      <div
+        className={joinClassNames('doc-page-actions-menu', menuClassName)}
+        data-open={isOpen}
+        role="menu"
+        aria-label="Page actions menu"
+      >
         <button
           type="button"
           className="doc-page-actions-item"

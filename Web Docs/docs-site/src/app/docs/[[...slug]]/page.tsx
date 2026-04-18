@@ -2,6 +2,7 @@ import { DocsSidebar } from '@/components/docs/Sidebar';
 import { DocsToc } from '../../../components/docs/Toc';
 import { FloatingThemeToggle } from '@/components/docs/FloatingThemeToggle';
 import { ContentTocToggle } from '@/components/docs/ContentTocToggle';
+import { DocPageActions } from '@/components/docs/DocPageActions';
 import {
   getAllDocSlugs,
   getDocBySlug,
@@ -244,7 +245,16 @@ export default async function DocsPage({
             <header className="doc-header">
               <div className="doc-header-top">
                 <p className="doc-kicker">{doc.section}</p>
-                {hasToc ? <ContentTocToggle /> : null}
+                <div className="doc-header-controls">
+                  {hasToc ? <ContentTocToggle /> : null}
+                  <DocPageActions
+                    slugPath={doc.slugPath}
+                    className="doc-header-page-actions"
+                    triggerClassName="doc-header-page-actions-trigger"
+                    menuClassName="doc-header-page-actions-menu"
+                    triggerLabel="Page content actions"
+                  />
+                </div>
               </div>
 
               <div className="doc-title-row">
