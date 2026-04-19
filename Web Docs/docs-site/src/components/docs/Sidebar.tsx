@@ -144,6 +144,7 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   const [isTabletSidebarOpen, setIsTabletSidebarOpen] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [activeLocale, setActiveLocale] = useState<string>('en-US');
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
 
@@ -213,6 +214,13 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
   }, [navigation]);
 
   const [isWidgetOpen, setIsWidgetOpen] = useState(true);
+
+  const toggleSection = useCallback((sectionName: string) => {
+    setOpenSections((current) => ({
+      ...current,
+      [sectionName]: !(current[sectionName] ?? true),
+    }));
+  }, []);
 
   useEffect(() => {
     closeTabletSidebar();
@@ -298,6 +306,37 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
       setIsWidgetOpen(true);
     }
   }, [currentPathname, widgetGroup]);
+
+  useEffect(() => {
+    setOpenSections((current) => {
+      const next: Record<string, boolean> = {};
+
+      navigation.forEach((section) => {
+        const isWidgetSection = section.section.toLowerCase() === 'widgets' && widgetGroup;
+        const hasActiveEntry = isWidgetSection
+          ? isActivePath(currentPathname, widgetGroup.href)
+            || widgetGroup.children.some((child) => isActivePath(currentPathname, child.href))
+          : section.pages.some((page) => isActivePath(currentPathname, toDocHref(page.slugPath)));
+
+        const currentValue = current[section.section];
+
+        if (hasActiveEntry) {
+          next[section.section] = true;
+        } else if (typeof currentValue === 'boolean') {
+          next[section.section] = currentValue;
+        } else {
+          next[section.section] = true;
+        }
+      });
+
+      const currentKeys = Object.keys(current);
+      const nextKeys = Object.keys(next);
+      const isSameState = currentKeys.length === nextKeys.length
+        && nextKeys.every((key) => current[key] === next[key]);
+
+      return isSameState ? current : next;
+    });
+  }, [currentPathname, navigation, widgetGroup]);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') {
@@ -543,16 +582,29 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
         </button>
 
         <div className="sidebar-scroll-content" ref={sidebarRef}>
-          {navigation.map((section) => {
+          {navigation.map((section, sectionIndex) => {
             const isWidgetSection = section.section.toLowerCase() === 'widgets' && widgetGroup;
+            const isSectionOpen = openSections[section.section] ?? true;
+            const sectionItemsId = `sidebar-section-items-${sectionIndex}`;
 
             if (isWidgetSection) {
               const groupIsActive = isExactPath(currentPathname, widgetGroup.href);
 
               return (
-                <div key={section.section} className="sidebar-section">
-                  <div className="sidebar-title">{section.section}</div>
-                  <div className="sidebar-section-items">
+                <div key={section.section} className="sidebar-section" data-open={isSectionOpen}>
+                  <button
+                    type="button"
+                    className="sidebar-title sidebar-section-toggle"
+                    data-open={isSectionOpen}
+                    aria-expanded={isSectionOpen}
+                    aria-controls={sectionItemsId}
+                    onClick={() => toggleSection(section.section)}
+                  >
+                    <span className="sidebar-section-hover-bg" aria-hidden="true" />
+                    <span className="sidebar-section-title-text">{section.section}</span>
+                    <ChevronRight className="sidebar-section-caret" size={14} aria-hidden="true" />
+                  </button>
+                  <div id={sectionItemsId} className="sidebar-section-items" data-open={isSectionOpen}>
                     <div className="sidebar-group" data-open={isWidgetOpen} data-active={groupIsActive}>
                       <div className="sidebar-group-row">
                         <Link
@@ -601,9 +653,20 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
             }
 
             return (
-              <div key={section.section} className="sidebar-section">
-                <div className="sidebar-title">{section.section}</div>
-                <div className="sidebar-section-items">
+              <div key={section.section} className="sidebar-section" data-open={isSectionOpen}>
+                <button
+                  type="button"
+                  className="sidebar-title sidebar-section-toggle"
+                  data-open={isSectionOpen}
+                  aria-expanded={isSectionOpen}
+                  aria-controls={sectionItemsId}
+                  onClick={() => toggleSection(section.section)}
+                >
+                  <span className="sidebar-section-hover-bg" aria-hidden="true" />
+                  <span className="sidebar-section-title-text">{section.section}</span>
+                  <ChevronRight className="sidebar-section-caret" size={14} aria-hidden="true" />
+                </button>
+                <div id={sectionItemsId} className="sidebar-section-items" data-open={isSectionOpen}>
                   {section.pages.map((page) => {
                     const href = toDocHref(page.slugPath);
                     const isCurrent = isExactPath(currentPathname, href);

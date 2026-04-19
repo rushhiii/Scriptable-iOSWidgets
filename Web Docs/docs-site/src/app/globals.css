@@ -2141,9 +2141,70 @@ html[data-theme='light'] .docs-footer-logo-image-dark {
 
 }
 
+.sidebar-section-toggle {
+  border: none;
+  width: 100%;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-section-hover-bg {
+  position: absolute;
+  inset: 0.14rem 0.32rem 0.26rem 0.38rem;
+  border-radius: 0.62rem;
+  background: var(--sidebar-item-hover-bg);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sidebar-section-toggle:hover .sidebar-section-hover-bg,
+.sidebar-section-toggle:focus-visible .sidebar-section-hover-bg {
+  opacity: 1;
+}
+
+.sidebar-section-title-text,
+.sidebar-section-caret {
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-section-caret {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-2px);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.sidebar-section-toggle:hover .sidebar-section-caret,
+.sidebar-section-toggle:focus-visible .sidebar-section-caret {
+  opacity: 0.92;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.sidebar-section-toggle[data-open="true"]:hover .sidebar-section-caret,
+.sidebar-section-toggle[data-open="true"]:focus-visible .sidebar-section-caret {
+  transform: translateX(0) rotate(90deg);
+}
+
 .sidebar-section-items {
   display: grid;
   gap: 0.15rem;
+  overflow: hidden;
+  max-height: 1200px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 0.25s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.sidebar-section-items[data-open="false"] {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
 }
 
 .sidebar-link,
@@ -2378,14 +2439,14 @@ html[data-theme='light'] .docs-footer-logo-image-dark {
   /* border-radius: 18px; */
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  /* border: 1px solid color-mix(in srgb, var(--border) 88%, transparent); */
   background: color-mix(in srgb, var(--surface-strong) 62%, transparent);
   overflow: hidden;
   aspect-ratio: 16 / 5.4;
 }
 
 
-@media  (max-width: 1400px) {
+@media  (max-width: 1500px) {
 .doc-page-banner {
   border-bottom-left-radius: 4px;
   border-bottom-right-radius: 0px;
