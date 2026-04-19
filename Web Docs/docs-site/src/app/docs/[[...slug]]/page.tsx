@@ -240,7 +240,7 @@ export default async function DocsPage({
       <div className={hasToc ? 'docs-shell' : 'docs-shell docs-shell-no-toc'}>
         <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
 
-        <main className="content-panel fade-in">
+        <main className="content-panel fade-in break-anywhere">
           <article>
             <header className="doc-header">
               <div className="doc-header-top">
