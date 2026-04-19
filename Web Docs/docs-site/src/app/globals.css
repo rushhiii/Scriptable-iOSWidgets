@@ -2471,7 +2471,7 @@ code {
   right: 0;
   z-index: 84;
   /* width: var(--toc-drawer-width); */
-  width: min(60vw, 300px);
+  width: min(72vw, 340px);
   height: 100vh;
   /* max-height: 100dvh; */
   /* height: 100vh; */
@@ -4037,7 +4037,8 @@ code {
     min-width: 0;
     width: min(88vw, 21rem);
     max-height: min(62vh, 24rem);
-    padding: 0.42rem;
+    /* padding: 0.42rem; */
+    padding: 0.62rem;
     overflow-y: auto;
     overscroll-behavior: contain;
     transform: none;
@@ -4056,9 +4057,11 @@ code {
   .subnav-link,
   .subnav-language-trigger {
     gap: 0.26rem;
-    padding: 0.2rem 0.42rem;
+    padding: 0.25rem 0.62rem;
+    /* padding: 0.2rem 0.42rem; */
     /* padding-bottom: 0; */
-    font-size: 0.875rem;
+    /* font-size: 0.875rem; */
+    font-size: 15px;
     /* border-radius: 0.5rem; */
   }
 
@@ -4085,16 +4088,16 @@ code {
   .subnav-link .nav-icon,
   .subnav-language-icon {
     /* width: 0.78rem; */
-    height: 0.88rem;
-    width: 0.88rem;
+    height: 0.99rem;
+    width: 0.99rem;
     /* height: auto; */
     /* aspect-ratio: 1/1; */
   }
 
   .subnav-link .nav-icon svg,
   .subnav-language-icon svg {
-    width: 0.88rem;
-    height: 0.88rem;
+    width: 0.99rem;
+    height: 0.99rem;
     /* width: inherit; */
     /* height: auto; */
     /* aspect-ratio: 1/1; */
@@ -4102,8 +4105,8 @@ code {
   }
 
   .subnav-caret {
-    width: 0.88rem;
-    height: 0.88rem;
+    width: 0.99rem;
+    height: 0.99rem;
     /* width: inherit; */
     /* height: auto; */
     /* aspect-ratio: 1/1; */
@@ -4121,8 +4124,8 @@ code {
   .subnav-language-trigger {
     /* min-width: 2rem; */
     justify-content: center;
-    padding: unset;
-    padding: .55rem .77rem;
+    /* padding: unset; */
+    padding: .55rem .62rem;
 
     /* padding-left: 0.34rem; */
     /* padding-right: 0.34rem; */
