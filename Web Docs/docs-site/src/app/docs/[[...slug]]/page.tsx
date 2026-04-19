@@ -237,24 +237,26 @@ export default async function DocsPage({
 
   return (
     <>
-      <div className={hasToc ? 'docs-shell' : 'docs-shell docs-shell-no-toc'}>
+      <div
+        className={`${hasToc ? 'docs-shell' : 'docs-shell docs-shell-no-toc'}${doc.bannerImage ? ' docs-shell-with-banner' : ''}`}
+      >
         <DocsSidebar navigation={navigation} currentSlugPath={doc.slugPath} />
+
+        {doc.bannerImage ? (
+          <figure className="doc-page-banner doc-page-banner-shell">
+            <img src={doc.bannerImage} alt={doc.bannerAlt || `${doc.title} banner`} loading="eager" />
+
+            {doc.bannerCaption || doc.bannerKicker ? (
+              <figcaption className="doc-page-banner-caption">
+                {doc.bannerKicker ? <p className="doc-page-banner-kicker">{doc.bannerKicker}</p> : null}
+                {doc.bannerCaption ? <p className="doc-page-banner-title">{doc.bannerCaption}</p> : null}
+              </figcaption>
+            ) : null}
+          </figure>
+        ) : null}
 
         <main className="content-panel fade-in break-anywhere">
           <article>
-            {doc.bannerImage ? (
-              <figure className="doc-page-banner">
-                <img src={doc.bannerImage} alt={doc.bannerAlt || `${doc.title} banner`} loading="eager" />
-
-                {doc.bannerCaption || doc.bannerKicker ? (
-                  <figcaption className="doc-page-banner-caption">
-                    {doc.bannerKicker ? <p className="doc-page-banner-kicker">{doc.bannerKicker}</p> : null}
-                    {doc.bannerCaption ? <p className="doc-page-banner-title">{doc.bannerCaption}</p> : null}
-                  </figcaption>
-                ) : null}
-              </figure>
-            ) : null}
-
             <header className="doc-header">
               <div className="doc-header-top">
                 <p className="doc-kicker">{doc.section}</p>
