@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, ChevronRight, Ellipsis, Menu } from 'lucide-react';
+import { ChevronDown, ChevronRight, Ellipsis, ExternalLink, Menu } from 'lucide-react';
 import { DocPageActions } from './DocPageActions';
 import { SearchCommand } from './SearchCommand';
 
@@ -32,6 +32,9 @@ const topNav: TopNavItem[] = [
   },
   { title: 'Changelog', href: '/docs/changelog' },
 ];
+
+const BRAND_WORDMARK_LIGHT_URL = '/logo_light.svg';
+const BRAND_WORDMARK_DARK_URL = '/logo_dark.svg';
 
 function normalizePath(path: string): string {
   const noHash = path.split('#')[0];
@@ -168,15 +171,40 @@ export function DocsTopbar() {
           ) : null} */}
 
           <Link className="brand" href="/docs/home">
-            <span className="brand-mark" aria-hidden="true">
+            {/* <span className="brand-mark" aria-hidden="true">
               <img src="/favicon.ico" alt="" />
+            </span> */}
+            {/* <span className="brand-name">Scriptable iOS Widgets</span> */}
+            <span className="brand-wordmark" aria-hidden="true">
+              <img
+                alt="Logo"
+                loading="eager"
+                className="brand-wordmark-image brand-wordmark-image-light"
+                src={BRAND_WORDMARK_LIGHT_URL}
+              />
+              <img
+                alt="Logo"
+                loading="eager"
+                className="brand-wordmark-image brand-wordmark-image-dark"
+                src={BRAND_WORDMARK_DARK_URL}
+              />
             </span>
-            <span className="brand-name">Scriptable iOS Widgets</span>
           </Link>
         </div>
 
         <div className="topbar-center">
-          <SearchCommand />
+          <div className="topbar-search-cluster">
+            <SearchCommand />
+            <a
+              className="topbar-repo-icon-link"
+              href="https://github.com/rushhiii/Scriptable-IOSWidgets"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Visit GitHub repository"
+            >
+              <ExternalLink size={16} aria-hidden="true" />
+            </a>
+          </div>
         </div>
 
         <div className="topbar-right">

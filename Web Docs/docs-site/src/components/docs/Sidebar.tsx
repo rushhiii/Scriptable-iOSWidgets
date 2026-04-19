@@ -46,6 +46,8 @@ type LanguageOption = {
 
 const SIDEBAR_SCROLL_KEY = 'docs.sidebar.scrollTop';
 const TABLET_MAX_WIDTH = 1020;
+const SIDEBAR_LOGO_LIGHT_URL = '/logo_light.svg';
+const SIDEBAR_LOGO_DARK_URL = '/logo_dark.svg';
 
 const languageOptions: LanguageOption[] = [
   { locale: 'en-US', label: '🇺🇸 English', targetLang: 'en' },
@@ -485,9 +487,9 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
         <div className="sidebar-tablet-header">
           <Link href="/docs/home" className="sidebar-tablet-brand" onClick={closeTabletSidebar}>
             <span className="sidebar-tablet-brand-mark" aria-hidden="true">
-              <img src="/favicon.ico" alt="" />
+              <img className="sidebar-tablet-brand-logo sidebar-tablet-brand-logo-light" src={SIDEBAR_LOGO_LIGHT_URL} alt="" />
+              <img className="sidebar-tablet-brand-logo sidebar-tablet-brand-logo-dark" src={SIDEBAR_LOGO_DARK_URL} alt="" />
             </span>
-            <span className="sidebar-tablet-brand-text">Scriptable Docs</span>
           </Link>
 
           <div className="sidebar-tablet-language-wrap" ref={languageMenuRef}>

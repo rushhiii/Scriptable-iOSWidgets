@@ -3,6 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import { faEnvelope, faGlobe } from '@fortawesome/free-solid-svg-icons';
 
+const FOOTER_LOGO_LIGHT_URL = '/logo_light.svg';
+const FOOTER_LOGO_DARK_URL = '/logo_dark.svg';
+
 const footerColumns = [
   {
     title: 'Docs',
@@ -35,9 +38,9 @@ export function DocsFooter() {
       <div className="docs-footer-inner">
         <div className="docs-footer-logo">
           <span className="docs-footer-logo-icon" aria-hidden="true">
-            <img className="docs-footer-logo-image" src="/favicon.ico" alt="" />
+            <img className="docs-footer-logo-image docs-footer-logo-image-light" src={FOOTER_LOGO_LIGHT_URL} alt="" />
+            <img className="docs-footer-logo-image docs-footer-logo-image-dark" src={FOOTER_LOGO_DARK_URL} alt="" />
           </span>
-          <span className="docs-footer-logo-text">Scriptable</span>
         </div>
 
         <div className="docs-footer-columns">
