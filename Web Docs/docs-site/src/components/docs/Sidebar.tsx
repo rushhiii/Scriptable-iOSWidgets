@@ -44,6 +44,8 @@ type LanguageOption = {
   targetLang: string;
 };
 
+type SidebarNavContext = 'overview' | 'installation' | 'usage' | 'widgets' | 'resources';
+
 const SIDEBAR_SCROLL_KEY = 'docs.sidebar.scrollTop';
 const TABLET_MAX_WIDTH = 1020;
 const SIDEBAR_LOGO_LIGHT_URL = '/logo_light.png';
@@ -205,13 +207,78 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
     setIsLanguageMenuOpen(false);
   }, []);
 
+  const activeSidebarContext = useMemo<SidebarNavContext>(() => {
+    if (isActivePath(currentPathname, '/docs/widgets')) {
+      return 'widgets';
+    }
+
+    if (isActivePath(currentPathname, '/docs/usage')) {
+      return 'usage';
+    }
+
+    if (isActivePath(currentPathname, '/docs/installation')) {
+      return 'installation';
+    }
+
+    const resourcesSection = navigation.find((entry) => entry.section === 'Resources');
+    const isResourcesPage = resourcesSection?.pages.some((page) => isActivePath(currentPathname, toDocHref(page.slugPath))) ?? false;
+
+    if (isResourcesPage) {
+      return 'resources';
+    }
+
+    return 'overview';
+  }, [currentPathname, navigation]);
+
+  const visibleNavigation = useMemo<NavSection[]>(() => {
+    const getStartedSection = navigation.find((entry) => entry.section === 'Get Started');
+    const widgetsSection = navigation.find((entry) => entry.section === 'Widgets');
+    const resourcesSection = navigation.find((entry) => entry.section === 'Resources');
+
+    const buildGetStartedSubset = (matcher: (slugPath: string) => boolean): NavSection[] => {
+      if (!getStartedSection) {
+        return [];
+      }
+
+      const pages = getStartedSection.pages.filter((page) => matcher(page.slugPath));
+
+      if (pages.length === 0) {
+        return [];
+      }
+
+      return [{
+        ...getStartedSection,
+        pages,
+      }];
+    };
+
+    switch (activeSidebarContext) {
+      case 'widgets':
+        return widgetsSection ? [widgetsSection] : navigation;
+      case 'resources':
+        return resourcesSection ? [resourcesSection] : navigation;
+      case 'installation': {
+        const subset = buildGetStartedSubset((slugPath) => slugPath === 'installation' || slugPath.startsWith('installation/'));
+        return subset.length > 0 ? subset : navigation;
+      }
+      case 'usage': {
+        const subset = buildGetStartedSubset((slugPath) => slugPath === 'usage' || slugPath.startsWith('usage/'));
+        return subset.length > 0 ? subset : navigation;
+      }
+      case 'overview':
+      default: {
+        return navigation;
+      }
+    }
+  }, [activeSidebarContext, navigation]);
+
   const widgetGroup = useMemo(() => {
-    const section = navigation.find((entry) => entry.section.toLowerCase() === 'widgets');
+    const section = visibleNavigation.find((entry) => entry.section.toLowerCase() === 'widgets');
     if (!section) {
       return null;
     }
     return buildWidgetGroup(section);
-  }, [navigation]);
+  }, [visibleNavigation]);
 
   const [isWidgetOpen, setIsWidgetOpen] = useState(true);
 
@@ -311,7 +378,7 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
     setOpenSections((current) => {
       const next: Record<string, boolean> = {};
 
-      navigation.forEach((section) => {
+      visibleNavigation.forEach((section) => {
         const isWidgetSection = section.section.toLowerCase() === 'widgets' && widgetGroup;
         const hasActiveEntry = isWidgetSection
           ? isActivePath(currentPathname, widgetGroup.href)
@@ -336,7 +403,7 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
 
       return isSameState ? current : next;
     });
-  }, [currentPathname, navigation, widgetGroup]);
+  }, [currentPathname, visibleNavigation, widgetGroup]);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') {
@@ -582,7 +649,7 @@ export function DocsSidebar({ navigation, currentSlugPath }: SidebarProps) {
         </button>
 
         <div className="sidebar-scroll-content" ref={sidebarRef}>
-          {navigation.map((section, sectionIndex) => {
+          {visibleNavigation.map((section, sectionIndex) => {
             const isWidgetSection = section.section.toLowerCase() === 'widgets' && widgetGroup;
             const isSectionOpen = openSections[section.section] ?? true;
             const sectionItemsId = `sidebar-section-items-${sectionIndex}`;
