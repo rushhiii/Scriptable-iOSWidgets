@@ -3837,21 +3837,18 @@ code {
 
   .brand-wordmark {
     display: grid;
-    /* width: clamp(4.2rem, 24vw, 6.5rem); */
-    width: 100%;
-    min-width: 0;
-    /* min-width: 4.2rem; */
-    /* max-width: 6.5rem; */
-    height: 100%;
-    /* max-height: 1.72rem; */
+    width: clamp(6rem, 34vw, 9rem);
+    min-width: 6rem;
+    max-width: 9rem;
+    height: 2rem;
+    max-height: 2rem;
     flex-shrink: 0;
   }
 
   .brand-wordmark-image {
     width: 100%;
-    min-width: 0;
     height: 100%;
-    /* max-height: 1.72rem; */
+    max-height: 100%;
     object-fit: contain;
     object-position: left center;
   }
@@ -4225,15 +4222,17 @@ code {
   }
 
   .brand-wordmark {
-    width: clamp(3.6rem, 21vw, 5rem);
-    min-width: 3.6rem;
-    max-width: 5rem;
-    height: 1.6rem;
-    max-height: 1.6rem;
+    /* width: clamp(5rem, 30vw, 7rem); */
+    
+    width: 100%;
+    min-width: 0;
+    max-width: 11rem;
+    height: 6rem;
+    max-height: 3rem;
   }
 
   .brand-wordmark-image {
-    max-height: 1.6rem;
+    max-height: 100%;
   }
 
   .topbar-right {
