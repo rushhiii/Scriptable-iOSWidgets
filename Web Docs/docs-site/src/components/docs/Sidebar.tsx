@@ -46,8 +46,8 @@ type LanguageOption = {
 
 const SIDEBAR_SCROLL_KEY = 'docs.sidebar.scrollTop';
 const TABLET_MAX_WIDTH = 1020;
-const SIDEBAR_LOGO_LIGHT_URL = '/logo_light.svg';
-const SIDEBAR_LOGO_DARK_URL = '/logo_dark.svg';
+const SIDEBAR_LOGO_LIGHT_URL = '/logo_light.png';
+const SIDEBAR_LOGO_DARK_URL = '/logo_dark.png';
 
 const languageOptions: LanguageOption[] = [
   { locale: 'en-US', label: '🇺🇸 English', targetLang: 'en' },

@@ -33,8 +33,8 @@ const topNav: TopNavItem[] = [
   { title: 'Changelog', href: '/docs/changelog' },
 ];
 
-const BRAND_WORDMARK_LIGHT_URL = '/logo_light.svg';
-const BRAND_WORDMARK_DARK_URL = '/logo_dark.svg';
+const BRAND_WORDMARK_LIGHT_URL = '/logo_light.png';
+const BRAND_WORDMARK_DARK_URL = '/logo_dark.png';
 
 function normalizePath(path: string): string {
   const noHash = path.split('#')[0];

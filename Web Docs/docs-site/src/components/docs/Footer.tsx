@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import { faEnvelope, faGlobe } from '@fortawesome/free-solid-svg-icons';
 
-const FOOTER_LOGO_LIGHT_URL = '/logo_light.svg';
-const FOOTER_LOGO_DARK_URL = '/logo_dark.svg';
+const FOOTER_LOGO_LIGHT_URL = '/logo_light.png';
+const FOOTER_LOGO_DARK_URL = '/logo_dark.png';
 
 const footerColumns = [
   {
