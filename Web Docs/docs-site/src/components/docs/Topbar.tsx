@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight, Ellipsis, ExternalLink, Menu } from 'lucide-react';
-import { DocPageActions } from './DocPageActions';
 import { SearchCommand } from './SearchCommand';
+import { TopbarAnnouncement } from './TopbarAnnouncement';
 
 type TopNavChild = {
   title: string;
@@ -52,21 +52,6 @@ function normalizePath(path: string): string {
   return trimmed;
 }
 
-function toDocSlugPath(pathname: string): string | null {
-  const normalizedPath = normalizePath(pathname);
-
-  if (normalizedPath === '/docs/home') {
-    return 'home';
-  }
-
-  if (!normalizedPath.startsWith('/docs/')) {
-    return null;
-  }
-
-  const slugPath = normalizedPath.slice('/docs/'.length).trim();
-  return slugPath.length > 0 ? slugPath : 'home';
-}
-
 function isActivePath(pathname: string, href: string): boolean {
   const current = normalizePath(pathname);
   const target = normalizePath(href);
@@ -97,7 +82,6 @@ function isTopItemActive(pathname: string, item: TopNavItem): boolean {
 export function DocsTopbar() {
   const pathname = usePathname();
   const activePathname = pathname || '/docs/home';
-  const currentDocSlugPath = toDocSlugPath(activePathname);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
   const [openOverflowParent, setOpenOverflowParent] = useState<string | null>(null);
@@ -149,6 +133,8 @@ export function DocsTopbar() {
 
   return (
     <div className="topbar">
+      <TopbarAnnouncement />
+
       <div className="topbar-inner">
         <div className="topbar-left">
           <button

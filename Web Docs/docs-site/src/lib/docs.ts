@@ -17,6 +17,10 @@ export type DocPage = {
   section: string;
   order: number;
   updated: string | null;
+  bannerImage: string | null;
+  bannerAlt: string | null;
+  bannerCaption: string | null;
+  bannerKicker: string | null;
   body: string;
   toc: TocItem[];
 };
@@ -48,6 +52,14 @@ type Frontmatter = {
   order?: number | string;
   updated?: string;
   toc?: boolean;
+  bannerImage?: string;
+  bannerAlt?: string;
+  bannerCaption?: string;
+  bannerKicker?: string;
+  banner_image?: string;
+  banner_alt?: string;
+  banner_caption?: string;
+  banner_kicker?: string;
 };
 
 const DOCS_ROOT = path.join(process.cwd(), 'content', 'docs');
@@ -93,6 +105,34 @@ function toTitleCase(value: string): string {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+function pickFrontmatterString(...values: Array<string | undefined>): string | null {
+  for (const value of values) {
+    const trimmed = value?.trim();
+
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+
+  return null;
+}
+
+function normalizeBannerImage(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (/^(https?:\/\/|data:)/i.test(value)) {
+    return value;
+  }
+
+  if (value.startsWith('/')) {
+    return value;
+  }
+
+  return `/${value.replace(/^\.?\//, '')}`;
 }
 
 function stripMarkdownTokens(value: string): string {
@@ -334,15 +374,27 @@ const loadDocs = cache(async (): Promise<DocPage[]> => {
 
       const parsedOrder = Number(frontmatter.order);
       const order = Number.isFinite(parsedOrder) ? parsedOrder : 999;
+      const title = frontmatter.title?.trim() || toTitleCase(safeSlug.at(-1) || 'Untitled');
+
+      const bannerImage = normalizeBannerImage(
+        pickFrontmatterString(frontmatter.bannerImage, frontmatter.banner_image)
+      );
+      const bannerAlt = pickFrontmatterString(frontmatter.bannerAlt, frontmatter.banner_alt);
+      const bannerCaption = pickFrontmatterString(frontmatter.bannerCaption, frontmatter.banner_caption);
+      const bannerKicker = pickFrontmatterString(frontmatter.bannerKicker, frontmatter.banner_kicker);
 
       return {
         slug: safeSlug,
         slugPath: safeSlug.join('/'),
-        title: frontmatter.title?.trim() || toTitleCase(safeSlug.at(-1) || 'Untitled'),
+        title,
         description: frontmatter.description?.trim() || '',
         section: frontmatter.section?.trim() || 'General',
         order,
         updated: frontmatter.updated?.trim() || null,
+        bannerImage,
+        bannerAlt,
+        bannerCaption,
+        bannerKicker,
         body: normalizedBody,
         toc: frontmatter.toc === false ? [] : extractToc(normalizedBody),
       } satisfies DocPage;

@@ -242,6 +242,19 @@ export default async function DocsPage({
 
         <main className="content-panel fade-in break-anywhere">
           <article>
+            {doc.bannerImage ? (
+              <figure className="doc-page-banner">
+                <img src={doc.bannerImage} alt={doc.bannerAlt || `${doc.title} banner`} loading="eager" />
+
+                {doc.bannerCaption || doc.bannerKicker ? (
+                  <figcaption className="doc-page-banner-caption">
+                    {doc.bannerKicker ? <p className="doc-page-banner-kicker">{doc.bannerKicker}</p> : null}
+                    {doc.bannerCaption ? <p className="doc-page-banner-title">{doc.bannerCaption}</p> : null}
+                  </figcaption>
+                ) : null}
+              </figure>
+            ) : null}
+
             <header className="doc-header">
               <div className="doc-header-top">
                 <p className="doc-kicker">{doc.section}</p>
