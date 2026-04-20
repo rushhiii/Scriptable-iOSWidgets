@@ -56,6 +56,10 @@ const defaultKeywords = [
   'GitHub stats widget iOS',
   'Scriptable widget docs',
 ];
+const googleSiteVerification =
+  process.env.GOOGLE_SITE_VERIFICATION || process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+const bingSiteVerification =
+  process.env.BING_SITE_VERIFICATION || process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
@@ -100,6 +104,16 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-video-preview': -1,
     },
+  },
+  verification: {
+    ...(googleSiteVerification ? { google: googleSiteVerification } : {}),
+    ...(bingSiteVerification
+      ? {
+          other: {
+            'msvalidate.01': bingSiteVerification,
+          },
+        }
+      : {}),
   },
   icons: {
     icon: '/favicon.ico',
