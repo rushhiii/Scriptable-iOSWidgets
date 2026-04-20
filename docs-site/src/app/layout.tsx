@@ -1,41 +1,10 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
+import { getSiteUrl } from '@/lib/site-url';
 import './globals.css';
 
-function normalizeSiteUrl(value: string | undefined): URL | null {
-  if (!value) {
-    return null;
-  }
-
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-
-  try {
-    const parsed = new URL(candidate);
-    parsed.hash = '';
-    parsed.search = '';
-
-    if (!parsed.pathname.endsWith('/')) {
-      parsed.pathname = `${parsed.pathname}/`;
-    }
-
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-const siteUrl =
-  normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL) ||
-  normalizeSiteUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
-  normalizeSiteUrl(process.env.VERCEL_URL) ||
-  new URL('http://localhost:3000/');
+const siteUrl = getSiteUrl();
 
 const sans = localFont({
   src: '../../public/fonts/inter-regular.woff2',
@@ -70,13 +39,68 @@ function ThemeScript() {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }
 
+const siteName = 'Scriptable iOS Widgets';
+const defaultTitle = `${siteName} Documentation`;
+const defaultDescription =
+  'Documentation for Scriptable iOS Widgets with setup guides, widget references, and customization walkthroughs for iPhone home screen widgets.';
+const defaultOgImage = '/logo_light.png';
+const defaultKeywords = [
+  'Scriptable iOS Widgets',
+  'Scriptable widgets',
+  'iPhone home screen widgets',
+  'Scriptable app iOS',
+  'iOS widget scripts',
+  'JavaScript iOS widgets',
+  'weather widget scriptable',
+  'countdown widget scriptable',
+  'GitHub stats widget iOS',
+  'Scriptable widget docs',
+];
+
 export const metadata: Metadata = {
   metadataBase: siteUrl,
   title: {
-    default: 'Scriptable iOS Widgets',
-    template: '%s | Scriptable iOS Widgets',
+    default: defaultTitle,
+    template: `%s | ${siteName}`,
   },
-  description: 'Modern, customizable documentation for a curated collection of Scriptable widgets.',
+  description: defaultDescription,
+  keywords: defaultKeywords,
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: '/',
+    siteName,
+    title: defaultTitle,
+    description: defaultDescription,
+    images: [
+      {
+        url: defaultOgImage,
+        width: 1200,
+        height: 630,
+        alt: `${siteName} documentation`,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: defaultTitle,
+    description: defaultDescription,
+    images: [defaultOgImage],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',

@@ -118,7 +118,10 @@ export async function generateMetadata({
   if (!targetSlug) {
     return {
       title: 'Docs',
-      description: 'Reusable documentation template.',
+      description: 'Documentation for Scriptable iOS Widgets.',
+      alternates: {
+        canonical: '/docs',
+      },
     };
   }
 
@@ -128,12 +131,53 @@ export async function generateMetadata({
     return {
       title: 'Not Found',
       description: 'The requested docs page was not found.',
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
+  const canonicalPath = `/docs/${doc.slugPath}`;
+  const description =
+    doc.description ||
+    `Learn how to set up and customize ${doc.title} for Scriptable iOS Widgets.`;
+  const title = `${doc.title} | Scriptable iOS Widgets`;
+  const socialImage = doc.bannerImage || '/logo_light.png';
+
   return {
-    title: `${doc.title} | Scriptable iOS Widgets`,
-    description: doc.description,
+    title: doc.title,
+    description,
+    keywords: [
+      doc.title,
+      doc.section,
+      'Scriptable iOS Widgets',
+      'Scriptable widgets',
+      'iPhone widgets',
+      'Widget setup guide',
+    ],
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      type: 'article',
+      url: canonicalPath,
+      title,
+      description,
+      siteName: 'Scriptable iOS Widgets',
+      images: [
+        {
+          url: socialImage,
+          alt: `${doc.title} - Scriptable iOS Widgets`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [socialImage],
+    },
   };
 }
 
