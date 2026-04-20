@@ -85,14 +85,10 @@ coverage.xml
 **/testing.md
 DEVELOPMENT.md
 
-# Widget-specific config files (NOT VitePress config!)
+# Widget-specific config files
 # Only ignore config files in widget directories that contain sensitive data
 **/Countdown\ Widget/config.js
 **/widget-configs/config.js
-
-# VitePress build cache (but keep source files!)
-docs/.vitepress/cache/
-docs/.vitepress/dist/
 
 # Temporary files
 temp/

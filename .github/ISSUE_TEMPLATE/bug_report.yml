@@ -1,0 +1,74 @@
+name: Bug report
+description: Report a bug in a widget, script behavior, or repo docs.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which area is affected?
+      options:
+        - Widget script
+        - Widget documentation
+        - Repository setup/docs
+        - Docs site (widget-related)
+    validations:
+      required: true
+
+  - type: input
+    id: widget_name
+    attributes:
+      label: Widget name (if applicable)
+      placeholder: e.g., Weather Widget
+
+  - type: input
+    id: ios_version
+    attributes:
+      label: iOS version
+      placeholder: e.g., iOS 18.4
+
+  - type: input
+    id: scriptable_version
+    attributes:
+      label: Scriptable version
+      placeholder: e.g., 1.8.x
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Please provide exact steps.
+      placeholder: |
+        1. Open Scriptable...
+        2. Run widget...
+        3. Observe error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Screenshots, parameters used, network/API setup, or anything relevant.

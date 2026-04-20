@@ -37,6 +37,9 @@ Welcome to my curated collection of **Scriptable** widgets and scripts, crafted 
     </ul>
   </li>
   <li><a href="#-how-to-use-these-scriptable-widgets?">How to Use Scriptable Widgets?</a></li>
+  <li><a href="#-contributing">Contributing</a></li>
+  <li><a href="#-code-of-conduct">Code of Conduct</a></li>
+  <li><a href="#-security">Security</a></li>
   <li><a href="#-feedback">Feedback</a></li>
   <li><a href="#-license">License</a></li>
 </ul>
@@ -221,6 +224,21 @@ Looking to explore more creative widgets? Check out these amazing developers and
      Refer to the widget's own folder or the script's header comments to see what parameters are supported.
 
 <br/>
+
+## 🤝 Contributing
+
+Contributions for this widgets-focused repository are welcome.
+
+- Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a PR.
+- Keep PRs scoped to widgets, widget docs, or related repository maintenance.
+
+## 🧭 Code of Conduct
+
+Please review [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) before contributing.
+
+## 🔒 Security
+
+If you discover a vulnerability, follow [SECURITY.md](./SECURITY.md) and avoid posting sensitive details publicly.
 
 ## 🙌 Feedback
 
