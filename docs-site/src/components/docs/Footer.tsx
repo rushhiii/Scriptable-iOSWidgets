@@ -75,7 +75,7 @@ export function DocsFooter() {
           rel="noreferrer"
           aria-label="GitHub"
         >
-          <FontAwesomeIcon icon={faGithub} size="lg" aria-hidden="true" />
+          <FontAwesomeIcon icon={faGithub} className="docs-footer-social-icon" aria-hidden="true" />
         </Link>
         <Link
           className="docs-footer-social-link"
@@ -84,7 +84,7 @@ export function DocsFooter() {
           rel="noreferrer"
           aria-label="LinkedIn"
         >
-          <FontAwesomeIcon icon={faLinkedin} size="lg" aria-hidden="true" />
+          <FontAwesomeIcon icon={faLinkedin} className="docs-footer-social-icon" aria-hidden="true" />
         </Link>
         <Link
           className="docs-footer-social-link"
@@ -93,14 +93,14 @@ export function DocsFooter() {
           rel="noreferrer"
           aria-label="Portfolio"
         >
-          <FontAwesomeIcon icon={faGlobe} size="lg" aria-hidden="true" />
+          <FontAwesomeIcon icon={faGlobe} className="docs-footer-social-icon" aria-hidden="true" />
         </Link>
         <Link
           className="docs-footer-social-link"
           href="mailto:rushiofficial1205@gmail.com"
           aria-label="Gmail"
         >
-          <FontAwesomeIcon icon={faEnvelope} size="lg" aria-hidden="true" />
+          <FontAwesomeIcon icon={faEnvelope} className="docs-footer-social-icon" aria-hidden="true" />
         </Link>
       </div>
     </footer>
