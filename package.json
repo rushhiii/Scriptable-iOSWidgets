@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@heyputer/puter.js": "^2.2.15"
+  }
+}

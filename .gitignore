@@ -4,6 +4,7 @@
 *.swp
 *.swo
 *~
+improve-code.mjs
 
 # Node.js
 node_modules/
