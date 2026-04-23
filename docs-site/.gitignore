@@ -20,3 +20,5 @@ Thumbs.db
 
 .vercel
 .env*.local
+
+.continue/

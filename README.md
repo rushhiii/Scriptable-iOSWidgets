@@ -50,19 +50,56 @@ The goal is simple: practical widgets that look good, stay fast, and are easy to
 
 ## Widget lineup
 
-| Widget | What it does | Sizes | Data source | Folder |
-| --- | --- | --- | --- | --- |
-| AQI + Temperature | Air quality + weather with adaptive themes | Small | OpenWeather | [Widgets/AQI Widget](./Widgets/AQI%20Widget) |
-| Dynamic Weather | Current weather with gradient UI | Small, Medium, Large | OpenWeather | [Widgets/Weather Widget](./Widgets/Weather%20Widget) |
-| Countdown | Event countdowns with pages/grid and offline cache | Small, Medium, Large | Google Sheets | [Widgets/Countdown Widget](./Widgets/Countdown%20Widget) |
-| Countdown v2 | Notion to Sheets to Calendar automation pipeline | Small, Medium, Large | Notion + Google stack | [Widgets/Countdown Widget/v2](./Widgets/Countdown%20Widget/v2) |
-| Birthday Life Progress | Age, days lived, and next-birthday ring | Small | Local parameter config | [Widgets/Birthday Widget](./Widgets/Birthday%20Widget) |
-| Modular Time Progress | Day/week/month/year progress visualizations | Small, Medium, Large | Local time calculations | [Widgets/TimeProgress Widget](./Widgets/TimeProgress%20Widget) |
-| Class Schedule Viewer | Daily/weekly class timeline with testing modes | Small, Medium, Large | Google Sheets CSV | [Widgets/Schedule Widget](./Widgets/Schedule%20Widget) |
-| My Quotes | Category-based quote widget with style controls | Small, Medium, Large | Google Sheets or Notion | [Widgets/Quote Widget](./Widgets/Quote%20Widget) |
-| GitHub Stats | Streaks, contributions, repo stats, heatmap themes | Small, Medium, Large | GitHub API | [Widgets/GitHubStats Widget](./Widgets/GitHubStats%20Widget) |
-| Hindu Color Wear | Daily traditional color guidance and rationale | Small, Medium, Large | Local weekday logic | [Widgets/HinduClrWear Widget](./Widgets/HinduClrWear%20Widget) |
-| Toyota | Toyota-focused widget currently in progress | TBD | TBD | [Widgets/Toyota Widget](./Widgets/Toyota%20Widget) |
+### [🌍 AQI + Temperature](./Widgets/AQI%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/aqi/openweatheraqi_showcase.png" />
+
+Real-time air quality and weather data with EPA-standard AQI color coding, automatic location detection, and adaptive themes. Dual-mode display for AQI or temperature.
+
+### [⛅ Dynamic Weather](./Widgets/Weather%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/weather/weather_showcase_s.png" />
+
+Clean weather widget with auto-location, real-time conditions, responsive typography, and gradient backgrounds. Supports small, medium, and large sizes.
+
+### [📆 Countdown](./Widgets/Countdown%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/countdown/countdow_showcase.png" />
+
+Track upcoming events with Google Sheets integration, customizable colors and icons, flexible layouts, and offline cache support. Multiple display modes.
+
+### [🧭 Countdown v2](./Widgets/Countdown%20Widget/v2)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/countdown/countdown_v2_showcase.png" />
+
+Advanced Notion-to-Sheets-to-Calendar automation pipeline with timezone-aware events, relative reminders, and Google Calendar integration.
+
+### [🎂 Birthday Life Progress](./Widgets/Birthday%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/birthday/birthday_showcase.png" />
+
+Beautiful minimal widget showing your exact age, total days lived, and a progress ring to your next birthday. Dark gradient design.
+
+### [⏳ Modular Time Progress](./Widgets/TimeProgress%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/timeprogress/timeprogress_showcase.png" />
+
+Visualize your life in motion with day, week, month, year, and week-number progress modes. Fully modular with gradient themes.
+
+### [📅 Class Schedule Viewer](./Widgets/Schedule%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/schedule/schedule_showcase.png" />
+
+Display your school/university schedule from Google Sheets with daily view, weekly overview, and weekday-specific gradient themes. Testing modes included.
+
+### [✒️ My Quotes](./Widgets/Quote%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/quotes/quote_showcase.png" />
+
+Daily quote widget with category support (Zen, Gita, Aurelius, etc.), dynamic styling, and integration with Google Sheets or Notion.
+
+### [📊 GitHub Stats](./Widgets/GitHubStats%20Widget)
+<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/githubstats/githubstats_showcase.png" />
+
+Track your GitHub contributions, streaks, commits, stars, and PRs with 20+ themes. Includes contribution heatmap, offline support, and repo-specific stats.
+
+
+### [🕉️ Hindu Color Wear](./Widgets/HinduClrWear%20Widget)
+<img width="80%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/hinduclrwear/hinduclrwear_showcase.png" />
+
+Daily traditional color guidance based on Hindu practices. Each day maps to a color and spiritual quality. All sizes with offline support.
 
 ## Quick start for users
 
