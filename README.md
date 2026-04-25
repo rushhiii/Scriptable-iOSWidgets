@@ -1,7 +1,7 @@
 # Scriptable iOS Widgets
 
 <p align="center">
-  <img alt="Scriptable iOS Widgets banner" width="100%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/scriptable_mockup_wall_filled.png" />
+  <img alt="Scriptable iOS Widgets banner" width="100%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/scriptable_mockup_wall_filled_new.png" />
 </p>
 
 <p align="center">
