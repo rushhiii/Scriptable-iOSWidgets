@@ -23,6 +23,7 @@ export type DocPage = {
   bannerKicker: string | null;
   body: string;
   toc: TocItem[];
+  sourceRelativePath: string;
 };
 
 export type NavPage = Pick<DocPage, 'title' | 'description' | 'slug' | 'slugPath'>;
@@ -395,6 +396,7 @@ const loadDocs = cache(async (): Promise<DocPage[]> => {
         bannerAlt,
         bannerCaption,
         bannerKicker,
+        sourceRelativePath: relativePath.replace(/\\/g, '/'),
         body: normalizedBody,
         toc: frontmatter.toc === false ? [] : extractToc(normalizedBody),
       } satisfies DocPage;

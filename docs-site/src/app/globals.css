@@ -2619,6 +2619,38 @@ html[data-theme='light'] .docs-footer-logo-image-dark {
   right: 0;
 }
 
+.doc-edit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text-2);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.doc-edit-link:hover {
+  color: var(--text-1);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+}
+
+.doc-edit-icon {
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  justify-content: center;
+}
+
+.doc-edit-icon svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: inherit;
+}
+
 .doc-title-row {
   display: flex;
   align-items: center;

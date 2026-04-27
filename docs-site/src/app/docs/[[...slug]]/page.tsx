@@ -25,6 +25,7 @@ import {
   SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react';
+import Edit3 from '@geist-ui/icons/edit3';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -211,6 +212,8 @@ export default async function DocsPage({
   const adjacent = await getPrevNextDoc(doc.slug);
   const hasToc = doc.toc.length > 0;
   const titleIcon = inferDocIconName(doc.section, doc.slugPath);
+  const githubEditBase = 'https://github.com/rushhiii/Scriptable-IOSWidgets/edit/main/docs-site/content/docs/';
+  const editUrl = `${githubEditBase}${doc.sourceRelativePath}`;
 
   const tocIdsByBase = new Map<string, string[]>();
   for (const item of doc.toc) {
@@ -306,6 +309,17 @@ export default async function DocsPage({
                 <p className="doc-kicker">{doc.section}</p>
                 <div className="doc-header-controls">
                   {hasToc ? <ContentTocToggle /> : null}
+                  <a
+                    href={editUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="doc-edit-link doc-edit-icon"
+                    aria-label="Edit this page on GitHub"
+                    title="Edit this page on GitHub"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"> <path d="M12 20h9" /> <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /> </svg>
+                    {/* <Edit3 aria-hidden="true" /> */}
+                  </a>
                   <DocPageActions
                     slugPath={doc.slugPath}
                     className="doc-header-page-actions"
