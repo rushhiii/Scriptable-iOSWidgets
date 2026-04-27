@@ -1,11 +1,11 @@
-# Graph Report - Scriptable-IOSWidgets  (2026-04-26)
+# Graph Report - Scriptable-IOSWidgets  (2026-04-27)
 
 ## Corpus Check
-- 46 files · ~172,450 words
+- 47 files · ~172,671 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 331 nodes · 474 edges · 21 communities detected
+- 332 nodes · 474 edges · 21 communities detected
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 17 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 

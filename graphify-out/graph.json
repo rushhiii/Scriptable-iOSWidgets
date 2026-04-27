@@ -1435,6 +1435,15 @@
       "norm_label": "getsiteurl()"
     },
     {
+      "label": "bootstrap-graphify.ps1",
+      "file_type": "code",
+      "source_file": "scripts\\bootstrap-graphify.ps1",
+      "source_location": "L1",
+      "id": "scripts_bootstrap_graphify_ps1",
+      "community": 37,
+      "norm_label": "bootstrap-graphify.ps1"
+    },
+    {
       "label": "OpenWeatherAQI.js",
       "file_type": "code",
       "source_file": "Widgets\\AQI Widget\\OpenWeatherAQI.js",
@@ -1584,7 +1593,7 @@
       "source_file": "Widgets\\Countdown Widget\\config.js",
       "source_location": "L1",
       "id": "widgets_countdown_widget_config_js",
-      "community": 37,
+      "community": 38,
       "norm_label": "config.js"
     },
     {
@@ -3375,8 +3384,8 @@
       "source_file": "docs-site\\src\\app\\docs\\[[...slug]]\\page.tsx",
       "source_location": "L229",
       "weight": 1.0,
-      "_src": "page_resolveheadingid",
-      "_tgt": "route_get",
+      "_src": "route_get",
+      "_tgt": "page_resolveheadingid",
       "source": "route_get",
       "target": "page_resolveheadingid"
     },
@@ -3387,8 +3396,8 @@
       "source_file": "docs-site\\src\\lib\\docs.ts",
       "source_location": "L512",
       "weight": 1.0,
-      "_src": "docs_getdocsnavigation",
-      "_tgt": "route_get",
+      "_src": "route_get",
+      "_tgt": "docs_getdocsnavigation",
       "source": "route_get",
       "target": "docs_getdocsnavigation"
     },
