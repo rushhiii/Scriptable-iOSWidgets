@@ -1,7 +1,7 @@
 # Graph Report - Scriptable-IOSWidgets  (2026-04-27)
 
 ## Corpus Check
-- 47 files · ~172,671 words
+- 47 files · ~172,744 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
