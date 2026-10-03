@@ -150,9 +150,3 @@ Run the project directly in Scriptable first. Confirm it does not depend on Node
 ### The app opens in the wrong presentation mode
 
 Open the project Settings and toggle the WebView presentation mode between fullscreen and sheet.
-
-## Files
-
-- `OmniLauncher.js`: launcher implementation
-- `OmniLauncher_GUIDE.md`: this guide
-- `OmniLauncher_ISSUE_27_REPORT.md`: GitHub issue report

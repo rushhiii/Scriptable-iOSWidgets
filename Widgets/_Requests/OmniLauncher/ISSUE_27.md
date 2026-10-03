@@ -101,15 +101,3 @@ Add a small official Scriptable helper that opens one configured local HTML file
 Add the launcher as an optional utility with documentation, project storage conventions, import behavior, and security guidance. This gives users a complete workflow but introduces more code and a larger maintenance surface.
 
 The current implementation is suitable as a prototype for the second option. The ZIP extraction limitation and native-code trust model should be documented prominently before release.
-
-## Proposed GitHub Comment
-
-> Thank you for opening this proposal and sharing OmniLauncher. The idea is useful: Scriptable can run local HTML in a WebView without requiring a server.
->
-> I built an initial enhanced implementation as `OmniLauncher.js`. It supports multiple projects, local import, GitHub/ZIP download, entry-file selection, HTML WebView execution, native Scriptable JavaScript execution, per-project configuration, persistent HTML `localStorage`, and named project save slots.
->
-> The implementation also adds safe-area handling and configurable fullscreen/sheet presentation for iOS.
->
-> The main limitation is ZIP extraction: Scriptable does not provide a dependable archive extraction API, so downloaded repositories currently need to be extracted in the Files app before configuration. Native projects also run with Scriptable privileges and therefore require trusted source files.
->
-> I documented the workflow and limitations in `OmniLauncher_GUIDE.md`. The implementation is ready for review as a prototype, with the remaining decision being whether the repository wants a small single-file HTML runner or the broader multi-project OmniLauncher feature.
