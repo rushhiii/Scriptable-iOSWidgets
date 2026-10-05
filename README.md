@@ -61,12 +61,12 @@ Real-time air quality and weather data with EPA-standard AQI color coding, autom
 Clean weather widget with auto-location, real-time conditions, responsive typography, and gradient backgrounds. Supports small, medium, and large sizes.
 
 ### [Countdown](./Widgets/Countdown%20Widget)
-<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/countdown/countdow_showcase.png" />
+<img width="70%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/countdown/countdow_showcase.png" />
 
 Track upcoming events with Google Sheets integration, customizable colors and icons, flexible layouts, and offline cache support. Multiple display modes.
 
 ### [Countdown v2](./Widgets/Countdown%20Widget/v2)
-<img width="60%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-iOSWidgets/refs/heads/main/.assets/countdown/countdown_v2_showcasee.png" />
+<img width="70%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-iOSWidgets/refs/heads/main/.assets/countdown/countdown_v2_showcasee.png" />
 
 Advanced Notion-to-Sheets-to-Calendar automation pipeline with timezone-aware events, relative reminders, and Google Calendar integration.
 
