@@ -95,11 +95,11 @@ Daily quote widget with category support (Zen, Gita, Aurelius, etc.), dynamic st
 
 Track your GitHub contributions, streaks, commits, stars, and PRs with 20+ themes. Includes contribution heatmap, offline support, and repo-specific stats.
 
-
+<!-- 
 ### [Hindu Color Wear](./Widgets/HinduClrWear%20Widget)
 <img width="80%" src="https://raw.githubusercontent.com/rushhiii/Scriptable-IOSWidgets/main/.assets/hinduclrwear/hinduclrwear_showcase.png" />
 
-Daily traditional color guidance based on Hindu practices. Each day maps to a color and spiritual quality. All sizes with offline support.
+Daily traditional color guidance based on Hindu practices. Each day maps to a color and spiritual quality. All sizes with offline support. -->
 
 ## Quick start for users
 
